@@ -355,7 +355,8 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <li>탭 1번: <b>X 표시</b> (왕관이 없다고 메모)</li>
     <li>탭 2번: <b>왕관</b> · 탭 3번: <b>지우기</b></li>
     <li>손가락으로 끌면 <b>여러 칸에 X</b></li>
-    <li>쉬움·보통: <b class="hg">자동 X와 힌트</b>를 쓸 수 있어요 (연습은 모든 크기에서 힌트 가능)</li>
+    <li>쉬움·보통: <b class="hg">자동 X</b>가 켜져요</li>
+    <li>오늘의 퍼즐 힌트: 쉬움·보통 <b class="hg">3번</b>, 어려움 <b class="hg">1번</b> · 연습은 무제한</li>
     <li>힌트는 누를 때마다 한 단계씩: <b class="hb">볼 곳</b> → <b class="hb">이유와 X칠 칸</b> → <b class="hr">정답 칸</b></li>
     <li>오늘의 퍼즐: <b class="hr">하트 3개</b>, 다 쓰면 순위 제외(계속 풀기 가능)</li>
     <li>남은 하트 1개마다 기록 <b class="hg">−10초</b></li>
@@ -372,7 +373,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <li>하트를 다 쓰면 <b class="hr">GAME OVER!</b> 끝까지 풀 수는 있지만 <b>순위에는 오르지 않아요.</b></li>
     <li>남은 하트 1개마다 기록에서 <b class="hg">10초를 빼 줘요.</b></li>
     <li>한 번 시작하면 <b class="hb">시간이 계속 흘러요.</b> 다른 기기로 <b>다시 할 수 없어요.</b></li>
-    <li>쉬움·보통은 <b class="hg">힌트 3번</b>. 누를 때마다 푸는 방법을 한 단계씩 알려 줘요.</li>
+    <li>힌트는 쉬움·보통 <b class="hg">3번</b>, 어려움 <b class="hg">1번</b>. 누를 때마다 푸는 방법을 한 단계씩 알려 줘요.</li>
     <li>순위: 오늘 <b class="hb">완료한 판 수</b>가 많은 순, 같으면 <b class="hb">합산 시간</b>이 짧은 순</li>
   </ul>
   <div class="grid2"><button class="btn" data-close>나중에</button><button class="btn y" id="dailyIntroGo">시작!</button></div>
@@ -414,7 +415,7 @@ const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwJ69tq5uxV35AJfBwqB9OsI0S7U38aU7eRXUDXevFLAG3UdkDu8ZMoBYABCAVp19uR2Q/exec',
   HEARTS: 3,
   HEART_BONUS_SEC: 10,
-  DAILY_HINTS: 3,   // 오늘의 퍼즐 안내형 힌트 (한 번 누를 때 한 단계)
+  DAILY_HINTS: {6:3,7:3,8:1},   // 오늘의 퍼즐 안내형 힌트 수 (한 번 누를 때 한 단계)
   ASSIST_MAX_SIZE: 7   // 이 크기 이하(쉬움·보통)에서만 자동 X와 힌트
 };
 const LEVELS = [
@@ -569,6 +570,43 @@ const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 function randPerm(n,rnd){const p=[],used=[];const rec=r=>{if(r===n)return true;for(const c of shuffle([...Array(n).keys()],rnd)){if(used[c]||(r>0&&Math.abs(p[r-1]-c)<=1))continue;used[c]=true;p[r]=c;if(rec(r+1))return true;used[c]=false}return false};rec(0);return p}
 function solutions(reg,n,limit){const out=[],p=[],uc=[],ug=[];const rec=(r,prev)=>{if(r===n){out.push(p.slice());return out.length>=limit}for(let c=0;c<n;c++){if(uc[c]||Math.abs(prev-c)<=1)continue;const g=reg[r*n+c];if(ug[g])continue;uc[c]=ug[g]=true;p[r]=c;if(rec(r+1,c))return true;uc[c]=ug[g]=false}return false};rec(0,-9);return out}
 function connectedWithout(reg,n,g,skip){const cells=[];for(let i=0;i<n*n;i++)if(reg[i]===g&&i!==skip)cells.push(i);if(!cells.length)return false;const seen=new Set([cells[0]]),st=[cells[0]];while(st.length){const i=st.pop(),r=i/n|0,c=i%n;for(const[dr,dc]of DIRS){const rr=r+dr,cc=c+dc;if(rr<0||cc<0||rr>=n||cc>=n)continue;const j=rr*n+cc;if(j!==skip&&reg[j]===g&&!seen.has(j)){seen.add(j);st.push(j)}}}return seen.size===cells.length}
+function logicSolvable(n,reg){
+  // 요령 세 가지(칸 하나 남은 줄·색, 한 줄에 갇힌 색, 놓으면 막히는 칸)만으로 끝까지 풀리는지 확인
+  const N=n*n,R=i=>i/n|0,C=i=>i%n;
+  const alive=new Array(N).fill(true),placed=[];
+  const hits=(a,b)=>R(a)===R(b)||C(a)===C(b)||reg[a]===reg[b]||(Math.abs(R(a)-R(b))<=1&&Math.abs(C(a)-C(b))<=1);
+  const place=i=>{placed.push(i);for(let j=0;j<N;j++)if(hits(i,j))alive[j]=false};
+  const groups=[];
+  for(let g=0;g<n;g++){const a=[];for(let i=0;i<N;i++)if(reg[i]===g)a.push(i);groups.push({k:'g',cells:a})}
+  for(let r=0;r<n;r++){const a=[];for(let c=0;c<n;c++)a.push(r*n+c);groups.push({k:'r',cells:a})}
+  for(let c=0;c<n;c++){const a=[];for(let r=0;r<n;r++)a.push(r*n+c);groups.push({k:'c',cells:a})}
+  const open=()=>groups.filter(gr=>!gr.cells.some(i=>placed.indexOf(i)>=0)).map(gr=>({k:gr.k,cells:gr.cells.filter(i=>alive[i])}));
+  for(let guard=0;guard<400&&placed.length<n;guard++){
+    const og=open();
+    if(og.some(gr=>gr.cells.length===0))return false;
+    const one=og.find(gr=>gr.cells.length===1);
+    if(one){place(one.cells[0]);continue}
+    let progress=false;
+    for(const gr of og){
+      if(gr.k==='g'){
+        for(const f of [R,C]){const v=f(gr.cells[0]);if(!gr.cells.every(i=>f(i)===v))continue;
+          for(let j=0;j<N;j++)if(alive[j]&&f(j)===v&&gr.cells.indexOf(j)<0){alive[j]=false;progress=true}}
+      }else{
+        const g=reg[gr.cells[0]];if(!gr.cells.every(i=>reg[i]===g))continue;
+        for(let j=0;j<N;j++)if(alive[j]&&reg[j]===g&&gr.cells.indexOf(j)<0){alive[j]=false;progress=true}
+      }
+      if(progress)break;
+    }
+    if(progress)continue;
+    for(let i=0;i<N&&!progress;i++){
+      if(!alive[i])continue;
+      const dead=og.some(gr=>gr.cells.indexOf(i)<0&&gr.cells.every(j=>hits(i,j)));
+      if(dead){alive[i]=false;progress=true}
+    }
+    if(!progress)return false;
+  }
+  return placed.length===n;
+}
 function generate(n,seedStr){
   const rnd=mulberry32(hashStr(seedStr));
   for(let attempt=0;attempt<500;attempt++){
@@ -587,6 +625,7 @@ function generate(n,seedStr){
         if(!nb.length||!connectedWithout(reg,n,g,i))continue;reg[i]=nb[0];moved=true;break}
       if(!moved)break;
     }
+    if(ok&&!logicSolvable(n,reg))ok=false;   // 요령으로 끝까지 풀리는 문제만
     if(ok){const colors=shuffle([...Array(COLOR_COUNT).keys()],rnd).slice(0,n);return{n,reg,sol,colors}}
   }
   throw new Error('퍼즐 생성 실패');
@@ -767,7 +806,7 @@ async function startGame(mode,n){
   const seed=mode==='daily'?`queens-${today}-${n}`:`practice-${Date.now()}-${Math.floor(Math.random()*1e9)}`;
   const P=generate(n,seed);
   const g={mode,n,seed,date:today,...P,marks:new Array(n*n).fill(0),hist:[],hearts:CONFIG.HEARTS,
-     hintsLeft:mode==='daily'?CONFIG.DAILY_HINTS:Infinity,startedAt:Date.now(),status:'play',finishMs:0,failed:false,pending:false};
+     hintsLeft:mode==='daily'?CONFIG.DAILY_HINTS[n]:Infinity,startedAt:Date.now(),status:'play',finishMs:0,failed:false,pending:false};
   if(mode==='daily'){
     const loc=store.get(saveKey(n),null);
     if(loc){g.marks=loc.marks||g.marks;g.hintsLeft=loc.hintsLeft??g.hintsLeft}
@@ -798,7 +837,7 @@ async function startGame(mode,n){
   $('gTitle').textContent=`${lv.name} ${n}×${n}`;
   $('gSub').textContent=mode==='daily'?`★ 오늘의 퍼즐 ${today.slice(5).replace('-','.')}`:'연습 모드';
   $('assistView').textContent=assist()?'자동 X ON':'';
-  $('hintBtn').style.visibility=(mode==='practice'||assist())?'visible':'hidden';
+  $('hintBtn').style.visibility='visible';
   buildBoard();render();
   setMsg(G.failed?'over':'info',G.failed?'GAME OVER! 순위에는 오르지 않지만 끝까지 풀어 보세요.':'탭 1번 X · 2번 왕관 · 3번 지우기 · 끌면 X 여러 칸');
   show('game');
@@ -930,7 +969,7 @@ function checkClear(){
     const n=G.n;
     // 서버 답이 오기 전까지는 이 기기에서 잰 값으로 먼저 보여 줌
     days[n]=Object.assign(days[n]||{},{status:failedRun?'fail':'clear',ms:G.finishMs,hearts:G.hearts,score:failedRun?0:scoreOf(G.finishMs,G.hearts)});
-    const hints=CONFIG.DAILY_HINTS-G.hintsLeft;
+    const hints=CONFIG.DAILY_HINTS[n]-G.hintsLeft;
     G.reward=null;
     if(ONLINE){G.pending=true;enqueue('finish',{name:me,pin,date:G.date,size:n,cols:G.sol.slice(),hints}).then(()=>{if(G&&G.pending)renderScore()})}
     else{
