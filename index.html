@@ -121,6 +121,14 @@ svg.pxi{shape-rendering:crispEdges;display:block}
 .col-l,.col-r{display:flex;flex-direction:column;gap:16px;min-width:0}
 
 
+/* 안내형 힌트 표시 */
+.cell.hl::after,.cell.hx::after,.cell.hc::after{content:'';position:absolute;inset:3px;pointer-events:none}
+.cell.hl::after{border:3px dashed #FFFFFF;animation:hlp .7s steps(2) infinite}
+.cell.hx::after{border:3px dashed #C0262F;background:repeating-linear-gradient(45deg,rgba(192,38,47,.28) 0 4px,transparent 4px 8px)}
+.cell.hc::after{border:4px solid #FFFFFF;box-shadow:0 0 0 3px #FFCC33;animation:hlp .5s steps(2) infinite}
+@keyframes hlp{50%{opacity:.25}}
+.msg b.tip{display:inline-block;margin-right:4px;padding:0 5px;border:2px solid #000;background:var(--yellow);color:var(--ink)}
+
 /* 보상 효과 */
 .spark.boom{width:6px;height:6px;margin:-3px 0 0 -3px;background:#FF2E88;
   box-shadow:0 -22px #FFE600,0 22px #00E5FF,-22px 0 #39FF14,22px 0 #FF8A00,-16px -16px #fff,16px -16px #B026FF,-16px 16px #FF4040,16px 16px #fff;
@@ -347,7 +355,8 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <li>탭 1번: <b>X 표시</b> (왕관이 없다고 메모)</li>
     <li>탭 2번: <b>왕관</b> · 탭 3번: <b>지우기</b></li>
     <li>손가락으로 끌면 <b>여러 칸에 X</b></li>
-    <li>쉬움·보통: <b class="hg">자동 X와 힌트</b>를 쓸 수 있어요</li>
+    <li>쉬움·보통: <b class="hg">자동 X와 힌트</b>를 쓸 수 있어요 (연습은 모든 크기에서 힌트 가능)</li>
+    <li>힌트는 누를 때마다 한 단계씩: <b class="hb">볼 곳</b> → <b class="hb">이유와 X칠 칸</b> → <b class="hr">정답 칸</b></li>
     <li>오늘의 퍼즐: <b class="hr">하트 3개</b>, 다 쓰면 순위 제외(계속 풀기 가능)</li>
     <li>남은 하트 1개마다 기록 <b class="hg">−10초</b></li>
     <li>순위: <b class="hb">완료한 판 수</b>가 많은 순, 같으면 <b class="hb">합산 시간</b>이 짧은 순</li>
@@ -363,6 +372,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <li>하트를 다 쓰면 <b class="hr">GAME OVER!</b> 끝까지 풀 수는 있지만 <b>순위에는 오르지 않아요.</b></li>
     <li>남은 하트 1개마다 기록에서 <b class="hg">10초를 빼 줘요.</b></li>
     <li>한 번 시작하면 <b class="hb">시간이 계속 흘러요.</b> 다른 기기로 <b>다시 할 수 없어요.</b></li>
+    <li>쉬움·보통은 <b class="hg">힌트 3번</b>. 누를 때마다 푸는 방법을 한 단계씩 알려 줘요.</li>
     <li>순위: 오늘 <b class="hb">완료한 판 수</b>가 많은 순, 같으면 <b class="hb">합산 시간</b>이 짧은 순</li>
   </ul>
   <div class="grid2"><button class="btn" data-close>나중에</button><button class="btn y" id="dailyIntroGo">시작!</button></div>
@@ -404,7 +414,7 @@ const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwJ69tq5uxV35AJfBwqB9OsI0S7U38aU7eRXUDXevFLAG3UdkDu8ZMoBYABCAVp19uR2Q/exec',
   HEARTS: 3,
   HEART_BONUS_SEC: 10,
-  DAILY_HINTS: 1,
+  DAILY_HINTS: 3,   // 오늘의 퍼즐 안내형 힌트 (한 번 누를 때 한 단계)
   ASSIST_MAX_SIZE: 7   // 이 크기 이하(쉬움·보통)에서만 자동 X와 힌트
 };
 const LEVELS = [
@@ -468,17 +478,17 @@ function achName(id){
 }
 // 판 색 테마 (영역 색 8개 + 판 테두리 + X 색)
 const THEMES=[
-  {id:'basic', name:'기본',   at:0,   frame:'#FFF4D6',x:'rgba(0,0,0,.6)',
+  {id:'basic', names:['주황','파랑','초록','보라','빨강','하늘','노랑','분홍'], name:'기본',   at:0,   frame:'#FFF4D6',x:'rgba(0,0,0,.6)',
    colors:['#FCA044','#6888FC','#58D854','#B8A0F8','#F87878','#3CBCFC','#F8E058','#F0A0D0']},
-  {id:'candy', name:'캔디',   at:150, frame:'#F0A0D0',x:'rgba(60,20,60,.55)',
+  {id:'candy', names:['분홍','살구','노랑','민트','하늘','보라','핑크','베이지'], name:'캔디',   at:150, frame:'#F0A0D0',x:'rgba(60,20,60,.55)',
    colors:['#FFB3BA','#FFDFBA','#FFF3A8','#BAF5C9','#BAE1FF','#D7BAFF','#FFC8F0','#E8C8A0']},
-  {id:'night', name:'밤하늘', at:500, frame:'#6888FC',x:'rgba(255,255,255,.7)',
+  {id:'night', names:['파랑','보라','청록','자주','초록','갈색','남색','적갈'], name:'밤하늘', at:500, frame:'#6888FC',x:'rgba(255,255,255,.7)',
    colors:['#3B4CCA','#7B3FA0','#1E7F8C','#C0436B','#2E8B57','#B5651D','#5A5FD0','#8C2F39']},
-  {id:'neon',  name:'오락실', at:1200,frame:'#39FF14',x:'rgba(0,0,0,.7)',
+  {id:'neon', names:['분홍','하늘','연두','노랑','주황','보라','민트','빨강'],  name:'오락실', at:1200,frame:'#39FF14',x:'rgba(0,0,0,.7)',
    colors:['#FF2E88','#00E5FF','#39FF14','#FFE600','#FF8A00','#B026FF','#00FFA3','#FF4040']},
-  {id:'gold',  name:'황금 성',at:2500,frame:'#FFCC33',x:'rgba(60,30,0,.6)',
+  {id:'gold', names:['노랑','금색','구리','올리브','적토','살구','라벤더','청회'],  name:'황금 성',at:2500,frame:'#FFCC33',x:'rgba(60,30,0,.6)',
    colors:['#E8C872','#C9A227','#D98E4A','#A8B17C','#C97B63','#E3B5A4','#B39BC8','#8FB3B0']},
-  {id:'royal', name:'왕좌',   royal:true,frame:'#FFCC33',x:'rgba(255,230,150,.8)',
+  {id:'royal', names:['보라','자주','장미','남보라','연보라','팥','남색','분홍'], name:'왕좌',   royal:true,frame:'#FFCC33',x:'rgba(255,230,150,.8)',
    colors:['#5B2A86','#8E3B8E','#B0306A','#3D2C8D','#7A4FB5','#A0466B','#2E1F5E','#C25B9B']}
 ];
 const CROWNS=[
@@ -788,7 +798,7 @@ async function startGame(mode,n){
   $('gTitle').textContent=`${lv.name} ${n}×${n}`;
   $('gSub').textContent=mode==='daily'?`★ 오늘의 퍼즐 ${today.slice(5).replace('-','.')}`:'연습 모드';
   $('assistView').textContent=assist()?'자동 X ON':'';
-  $('hintBtn').style.visibility=assist()?'visible':'hidden';
+  $('hintBtn').style.visibility=(mode==='practice'||assist())?'visible':'hidden';
   buildBoard();render();
   setMsg(G.failed?'over':'info',G.failed?'GAME OVER! 순위에는 오르지 않지만 끝까지 풀어 보세요.':'탭 1번 X · 2번 왕관 · 3번 지우기 · 끌면 X 여러 칸');
   show('game');
@@ -855,6 +865,10 @@ function render(){
     else if(m===1||ax.has(i)){html=XSVG;label='X'}
     if(el._h!==html){el.innerHTML=html;el._h=html}
     el.classList.toggle('wrong',wrong);
+    const hv=G.hintVis||{};
+    el.classList.toggle('hl',!!(hv.hl&&hv.hl.includes(i)));
+    el.classList.toggle('hx',!!(hv.hx&&hv.hx.includes(i))&&m!==1);
+    el.classList.toggle('hc',!!(hv.hc&&hv.hc.includes(i))&&m!==2);
     el.setAttribute('aria-label',`${r}행 ${c}열 ${label}`);
   });
   $('count').textContent=`${correctCrowns().length}/${G.n}`;
@@ -1017,7 +1031,7 @@ $('board').addEventListener('pointerdown',e=>{
   if(!G||G.status==='clear')return;
   const i=cellAt(e.clientX,e.clientY);if(i<0)return;
   e.preventDefault();
-  drag={start:i,moved:false,seen:new Set([i]),id:e.pointerId};
+  drag={start:i,moved:false,seen:new Set([i]),id:e.pointerId};G.hintVis=null;
   pushHist();
 });
 window.addEventListener('pointermove',e=>{
@@ -1032,7 +1046,7 @@ window.addEventListener('pointerup',e=>{
   const d=drag;drag=null;
   if(!d.moved){
     const i=d.start,v=(G.marks[i]+1)%3;
-    cellFx(i,v);setMark(i,v);afterChange();
+    G.hintVis=null;cellFx(i,v);setMark(i,v);afterChange();
     if(v===2&&isSol(i))spark(i);
     return;
   }
@@ -1040,22 +1054,111 @@ window.addEventListener('pointerup',e=>{
 });
 window.addEventListener('pointercancel',()=>{drag=null});
 
-$('undoBtn').onclick=()=>{if(!G.hist.length)return;G.marks=G.hist.pop();render();persist()};
-$('clearBtn').onclick=()=>{if(G.status==='clear')return;pushHist();G.marks=G.marks.map(()=>0);render();persist()};
+$('undoBtn').onclick=()=>{if(!G.hist.length)return;G.hintVis=null;G.marks=G.hist.pop();render();persist()};
+$('clearBtn').onclick=()=>{if(G.status==='clear')return;pushHist();G.hintVis=null;G.marks=G.marks.map(()=>0);render();persist()};
+/* ---------- 안내형 힌트: 다음에 할 수 있는 한 수를 찾아 단계별로 알려 줌 ---------- */
+const TIP_NAME={single:'요령 1 · 칸이 적은 색',basic:'기본 · 왕관 주변',confine:'요령 2 · 한 줄에 갇힌 색',block:'요령 3 · 놓으면 막히는 칸',wrong:'먼저 고치기',deep:'정답 공개'};
+function regionName(g){const th=equipped('theme');return((th.names||THEMES[0].names)[G.colors[g]]||'이')+'색'}
+function rc(i){return`${(i/G.n|0)+1}행 ${i%G.n+1}열`}
+function findHint(){
+  const n=G.n,N=n*n,R=i=>i/n|0,C=i=>i%n;
+  // 틀린 왕관이 있으면 먼저 지우게 함
+  const wrongs=[];G.marks.forEach((m,i)=>{if(m===2&&!isSol(i))wrongs.push(i)});
+  if(wrongs.length)return{key:'wrong',tip:'wrong',hl:wrongs,hx:[],target:-1,
+    s1:'빨간 왕관이 있어요. 먼저 지우고 다시 생각해 봐요.',s2:'빨간 왕관은 정답 자리가 아니에요. 한 번 더 눌러 지워 주세요.'};
+  const placed=correctCrowns(),usedR=new Set(placed.map(R)),usedC=new Set(placed.map(C)),usedG=new Set(placed.map(i=>G.reg[i]));
+  const blocked=i=>usedR.has(R(i))||usedC.has(C(i))||usedG.has(G.reg[i])||placed.some(p=>Math.abs(R(p)-R(i))<=1&&Math.abs(C(p)-C(i))<=1);
+  // 학생이 맞게 친 X는 이미 아는 것으로 보고 후보에서 뺌 (정답 칸에 친 X는 무시)
+  const cand=[];for(let i=0;i<N;i++)if(!placed.includes(i)&&!blocked(i)&&!(G.marks[i]===1&&!isSol(i)))cand.push(i);
+  const groups=[];
+  for(let g=0;g<n;g++)if(!usedG.has(g))groups.push({kind:'g',id:g,cells:cand.filter(i=>G.reg[i]===g),name:regionName(g)});
+  for(let r=0;r<n;r++)if(!usedR.has(r))groups.push({kind:'r',id:r,cells:cand.filter(i=>R(i)===r),name:`${r+1}행`});
+  for(let c=0;c<n;c++)if(!usedC.has(c))groups.push({kind:'c',id:c,cells:cand.filter(i=>C(i)===c),name:`${c+1}열`});
+  const allOf=gr=>{const out=[];for(let i=0;i<N;i++){if(gr.kind==='g'?G.reg[i]===gr.id:gr.kind==='r'?R(i)===gr.id:C(i)===gr.id)out.push(i)}return out};
+  // 요령 1: 칸이 하나뿐인 색(또는 줄)
+  const one=groups.filter(gr=>gr.cells.length===1).sort((a,b)=>(a.kind==='g'?0:1)-(b.kind==='g'?0:1))[0];
+  if(one)return{key:'single'+one.kind+one.id,tip:'single',hl:allOf(one),hx:[],target:one.cells[0],
+    s1:`${one.name}${one.kind==='g'?'을':'을'} 살펴보세요. 왕관이 갈 수 있는 칸이 몇 개 남았나요?`,
+    s2:`${one.name}에 왕관이 갈 수 있는 칸은 ${rc(one.cells[0])} 하나뿐이에요!`};
+  // 기본: 놓인 왕관 때문에 막혔는데 아직 X를 안 친 칸 (자동 X가 없는 판에서만)
+  if(!assist()&&placed.length){
+    const todo=[];for(let i=0;i<N;i++)if(G.marks[i]===0&&!placed.includes(i)&&blocked(i))todo.push(i);
+    if(todo.length>=3)return{key:'basic',tip:'basic',hl:placed,hx:todo,target:-1,
+      s1:'놓은 왕관 주변부터 정리해 봐요. 같은 가로줄·세로줄·색, 바로 붙은 칸은 어떻게 될까요?',
+      s2:'빗금 친 칸은 놓은 왕관 때문에 왕관이 올 수 없어요. X를 쳐 두면 보기 쉬워요.'};
+  }
+  // 요령 2: 한 줄에 갇힌 색 / 한 색에 갇힌 줄
+  for(const gr of groups.filter(x=>x.kind==='g').sort((a,b)=>a.cells.length-b.cells.length)){
+    if(gr.cells.length<2)continue;
+    for(const axis of ['r','c']){
+      const f=axis==='r'?R:C;const v=f(gr.cells[0]);
+      if(!gr.cells.every(i=>f(i)===v))continue;
+      const elim=cand.filter(i=>f(i)===v&&G.reg[i]!==gr.id&&G.marks[i]!==1);
+      if(!elim.length)continue;
+      const line=axis==='r'?`${v+1}행`:`${v+1}열`;
+      return{key:'confine'+gr.id+axis,tip:'confine',hl:gr.cells,hx:elim,target:-1,
+        s1:`${gr.name}을 살펴보세요. 왕관이 갈 수 있는 칸이 어느 줄에 모여 있나요?`,
+        s2:`${gr.name}은 ${line}에만 들어갈 수 있어요. 그래서 ${line}의 다른 색 칸은 모두 X예요.`};
+    }
+  }
+  for(const gr of groups.filter(x=>x.kind!=='g').sort((a,b)=>a.cells.length-b.cells.length)){
+    if(gr.cells.length<2)continue;
+    const g=G.reg[gr.cells[0]];if(!gr.cells.every(i=>G.reg[i]===g))continue;
+    const f=gr.kind==='r'?R:C;
+    const elim=cand.filter(i=>G.reg[i]===g&&f(i)!==gr.id&&G.marks[i]!==1);
+    if(!elim.length)continue;
+    return{key:'confine-line'+gr.kind+gr.id,tip:'confine',hl:gr.cells,hx:elim,target:-1,
+      s1:`${gr.name}을 살펴보세요. 남은 칸이 모두 같은 색이에요.`,
+      s2:`${gr.name}에는 ${regionName(g)}만 들어갈 수 있어요. 그래서 ${regionName(g)}의 다른 줄 칸은 모두 X예요.`};
+  }
+  // 요령 3: 여기에 놓으면 다른 색(줄)이 들어갈 곳이 없어지는 칸
+  const order=cand.filter(i=>G.marks[i]!==1).sort((a,b)=>{
+    const sa=groups.find(x=>x.kind==='g'&&x.id===G.reg[a]).cells.length,sb=groups.find(x=>x.kind==='g'&&x.id===G.reg[b]).cells.length;return sa-sb});
+  for(const i of order){
+    const kill=j=>j===i||R(j)===R(i)||C(j)===C(i)||G.reg[j]===G.reg[i]||(Math.abs(R(j)-R(i))<=1&&Math.abs(C(j)-C(i))<=1);
+    const dead=groups.find(gr=>!(gr.kind==='g'&&gr.id===G.reg[i])&&!(gr.kind==='r'&&gr.id===R(i))&&!(gr.kind==='c'&&gr.id===C(i))&&gr.cells.length&&gr.cells.every(kill));
+    if(dead)return{key:'block'+i,tip:'block',hl:[i,...dead.cells],hx:[i],target:-1,
+      s1:`${regionName(G.reg[i])}의 후보 칸 하나를 의심해 봐요. 여기에 왕관을 놓으면 ${dead.name}은 어떻게 될까요?`,
+      s2:`${rc(i)}에 왕관을 놓으면 ${dead.name}이 들어갈 자리가 하나도 없어져요. 그래서 ${rc(i)}은 X예요.`};
+  }
+  return{key:'deep',tip:'deep',hl:[],hx:[],target:-1,s1:'',s2:''};
+}
+function hintAnswerCell(h){
+  // 3단계: 힌트와 관련된 정답 칸 하나 (없으면 남은 칸이 가장 적은 색의 정답 칸)
+  if(h.target>=0)return h.target;
+  const n=G.n;const rel=new Set(h.hl.map(i=>G.reg[i]));
+  for(let r=0;r<n;r++){const i=r*n+G.sol[r];if(G.marks[i]!==2&&rel.has(G.reg[i]))return i}
+  for(let r=0;r<n;r++){const i=r*n+G.sol[r];if(G.marks[i]!==2)return i}
+  return -1;
+}
 $('hintBtn').onclick=()=>{
   if(G.status==='clear'||G.hintsLeft<=0)return;
-  // 아직 놓지 않은 정답 칸 중, 남은 칸이 가장 적은 색 영역의 칸을 알려 줌
-  const n=G.n,ax=autoXSet();let best=-1,bestFree=1e9;
-  for(let r=0;r<n;r++){const i=r*n+G.sol[r];if(G.marks[i]===2)continue;
-    const g=G.reg[i];let free=0;for(let k=0;k<n*n;k++)if(G.reg[k]===g&&G.marks[k]!==1&&!ax.has(k))free++;
-    if(free<bestFree){bestFree=free;best=i}}
-  if(best<0)return;
-  pushHist();
-  G.marks=G.marks.map((m,i)=>m===2&&!isSol(i)?0:m);
-  G.marks[best]=2;G.hintsLeft--;
-  const el=cellEls[best];restartAnim(el,'hint');cellFx(best,2);
-  setMsg('info','HINT! 반짝이는 칸이 왕관 자리예요.');SFX.crown();
-  afterChange();spark(best);
+  const h=findHint();
+  const same=G.hint&&G.hint.key===h.key;
+  let stage=same?Math.min(3,G.hint.stage+1):1;
+  if(h.tip==='deep')stage=3;
+  if(h.tip==='wrong'&&stage===3){   // 틀린 왕관은 지워 주기만 함
+    pushHist();G.marks=G.marks.map((m,i)=>m===2&&!isSol(i)?0:m);G.hint=null;G.hintVis=null;
+    if(G.mode==='daily')G.hintsLeft--;
+    setMsg('info','빨간 왕관을 지웠어요. 다시 힌트를 눌러 보세요.');SFX.tap();afterChange();return;
+  }
+  G.hint={key:h.key,stage};
+  if(G.mode==='daily')G.hintsLeft--;
+  const m=$('msg');m.className='msg info';
+  const head=`<b class="tip">HINT ${stage}/3</b>`;
+  if(stage===1){
+    G.hintVis={hl:h.hl};m.innerHTML=head;m.insertAdjacentText('beforeend',`${TIP_NAME[h.tip]} — ${h.s1}`);SFX.x();render();persist();
+  }else if(stage===2){
+    G.hintVis={hl:h.hl,hx:h.hx,hc:h.target>=0?[h.target]:[]};m.innerHTML=head;m.insertAdjacentText('beforeend',`${TIP_NAME[h.tip]} — ${h.s2}`);SFX.x();render();persist();
+  }else{
+    const best=hintAnswerCell(h);if(best<0)return;
+    pushHist();
+    G.marks=G.marks.map((mm,i)=>mm===2&&!isSol(i)?0:mm);
+    G.marks[best]=2;G.hint=null;G.hintVis=null;
+    const el=cellEls[best];restartAnim(el,'hint');cellFx(best,2);
+    m.innerHTML=head;m.insertAdjacentText('beforeend',h.tip==='deep'?'이번 단계는 어려워요. 정답 칸 하나를 알려 줄게요.':'정답 칸을 알려 줄게요. 왜 여기인지 한번 생각해 봐요.');
+    SFX.crown();afterChange();spark(best);
+  }
 };
 $('backBtn').onclick=()=>{clearInterval(timerId);persist();goHome()};
 
