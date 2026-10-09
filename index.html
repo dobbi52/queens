@@ -32,6 +32,14 @@ button{font-family:inherit;cursor:pointer;color:var(--ink)}
 h2{margin:0;font-size:18px;color:var(--yellow)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+/* 도전 */
+.card.ch{min-height:0;flex-direction:row;align-items:center;justify-content:space-between;width:100%;background:#2A2245;color:#FFF4D6}
+.card.ch .s{color:#B8A0F8}
+.card.ch.lock{background:#3A3458;color:#9C95C9}
+.card.ch.done{background:#4A4570}
+.gem{color:#3CBCFC;text-shadow:1px 1px 0 #000}
+.pick.lock{color:#8A84A8;background:#D8D2BC}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .pick{height:44px;border:3px solid #000;background:var(--panel);font-size:14px;padding:0}
 .pick.on{background:var(--blue);color:#fff;font-weight:700}
@@ -250,6 +258,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
   <div style="display:flex;flex-direction:column;gap:10px">
     <div class="row"><h2>★ 오늘의 퍼즐</h2><span class="dim" id="todayView"></span></div>
     <div class="grid3" id="dailyCards"></div>
+    <button class="card ch" id="chCard"></button>
     <button class="btn" id="rankLink" style="height:auto;padding:10px 12px;background:var(--blue);color:#fff;box-shadow:inset -3px -3px 0 #22398F,3px 3px 0 #000;display:flex;flex-direction:column;align-items:center;gap:6px">
       <span style="display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700"><svg class="pxi" width="22" height="17" viewBox="0 0 9 7" data-icon="crownFlat"></svg>오늘의 순위표 ▶</span>
       <span style="font-size:12px;color:#D6DEFF">내 합산 <span id="totalView">0/3판 · 00:00</span></span>
@@ -257,7 +266,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
   </div>
   <div class="practice px">
     <div class="row"><h2 style="color:var(--panel);font-size:16px">연습 모드</h2><span class="dim">실수 제한 없음</span></div>
-    <div class="grid3" id="practicePick"></div>
+    <div class="grid4" id="practicePick"></div>
     <button class="btn y" id="practiceStart" style="font-size:18px">START</button>
   </div>
 </div>
@@ -306,7 +315,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
   </div>
   <div class="rank-wrap" style="display:flex;flex-direction:column;gap:10px">
     <div class="row"><h2>HIGH SCORE</h2><span class="dim" id="rankDate"></span></div>
-    <div class="grid4" id="rankTabs"></div>
+    <div class="grid5" id="rankTabs"></div>
     <div class="rank px" id="rankList"></div>
     <span class="dim" style="line-height:1.6">GAME OVER(하트 0개)는 끝까지 풀 수 있지만 순위에는 오르지 않아요.</span>
   </div>
@@ -341,12 +350,14 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
   <div class="items" id="crownItems" data-panel="crown" hidden></div>
   <div class="items" id="fxItems" data-panel="effect" hidden></div>
   <div data-panel="ach" hidden style="display:flex;flex-direction:column;gap:10px">
-  <div class="row"><span class="dim">진행 중인 업적</span><span class="dim" id="achCount"></span></div>
+  <div class="row"><span class="dim">도전 중인 업적</span><span class="dim" id="achCount"></span></div>
   <div class="rank px" id="achList"></div>
+  <div class="row"><span class="dim">모은 업적</span></div>
+  <div id="achGot" style="display:flex;flex-wrap:wrap;gap:6px;line-height:1.8"></div>
   </div>
 </div>
 <div class="col-r">
-  <p class="dim" style="margin:0;line-height:1.7">오늘의 퍼즐 완료: 쉬움 10P · 보통 20P · 어려움 30P<br>남은 하트 1개 +5P · 하루 세 판 모두 +20P · 업적 +30P</p>
+  <p class="dim" style="margin:0;line-height:1.7">오늘의 퍼즐 완료: 쉬움 10P · 보통 20P · 어려움 30P · 도전 15P<br>남은 하트 1개 +5P · 하루 세 판 모두 +20P · 업적 +20~80P</p>
   <button class="btn" id="logoutBtn" style="margin-top:8px">로그아웃</button>
 </div>
 </section>
@@ -371,6 +382,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <li>칸을 <b>꾹 누르면</b> 표시가 지워져요</li>
     <li>쉬움·보통: <b class="hg">자동 X</b>가 켜져요</li>
     <li>오늘의 퍼즐 힌트: 쉬움·보통 <b class="hg">3번</b>, 어려움 <b class="hg">1번</b> · 연습은 무제한</li>
+    <li><b class="gem">◆</b> 어려움을 깨면 <b>오늘의 도전</b>이 열려요 (힌트 없음 · 종합 합산 시간 <b class="hg">−30초</b>)</li>
     <li>힌트는 누를 때마다 한 단계씩: <b class="hb">볼 곳</b> → <b class="hb">이유와 X칠 칸</b> → <b class="hr">정답 칸</b></li>
     <li>오늘의 퍼즐: <b class="hr">하트 3개</b>, 다 쓰면 순위 제외(계속 풀기 가능)</li>
     <li>남은 하트 1개마다 기록 <b class="hg">−10초</b></li>
@@ -429,12 +441,17 @@ const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwJ69tq5uxV35AJfBwqB9OsI0S7U38aU7eRXUDXevFLAG3UdkDu8ZMoBYABCAVp19uR2Q/exec',
   HEARTS: 3,
   HEART_BONUS_SEC: 10,
-  DAILY_HINTS: {6:3,7:3,8:1},   // 오늘의 퍼즐 안내형 힌트 수 (한 번 누를 때 한 단계)
+  DAILY_HINTS: {6:3,7:3,8:1,9:0},   // 9는 도전(힌트 없음)
+  CH_BONUS_MS: 30000,   // 도전을 깨면 종합 합산 시간에서 빼 주는 시간   // 오늘의 퍼즐 안내형 힌트 수 (한 번 누를 때 한 단계)
   ASSIST_MAX_SIZE: 7   // 이 크기 이하(쉬움·보통)에서만 자동 X와 힌트
 };
 const LEVELS = [
   {n:6, name:'쉬움'}, {n:7, name:'보통'}, {n:8, name:'어려움'}
 ];
+// 도전: 8×8 판, 요령 세 가지만으로는 막히는 문제. 그날 어려움을 깨면 열림
+const CHALLENGE = {n:9, name:'도전', size:8};
+const ALL_LEVELS = [...LEVELS, CHALLENGE];
+function boardSize(lv){return lv===9?8:lv}
 
 /* ---------- 8비트 효과음 (기본 꺼짐) ---------- */
 let soundOn=false, actx=null;
@@ -459,7 +476,6 @@ const SFX={
   over:()=>beep([[392,.15],[330,.15],[262,.3]])
 };
 /* ---------- 왕관 포인트 · 칭호 · 꾸미기 (Code.gs와 같은 규칙) ---------- */
-const REWARD={BASE:{6:10,7:20,8:30},HEART:5,TRIPLE:20,ACH:30};
 const TITLES=[
   {at:0,   name:'견습생',color:'#9C95C9'},
   {at:150, name:'기사',  color:'#6888FC'},
@@ -467,29 +483,127 @@ const TITLES=[
   {at:1200,name:'왕',    color:'#FFCC33'},
   {at:2500,name:'황제',  color:'#F878F8'}
 ];
-const TIER_POINTS=[30,40,50,70,100];
-const PRACTICE_DAILY_MAX=20,PRACTICE_MIN_MS=10000;
-const ACH_SHOW=5;   // 꾸미기 화면에 보여 줄 진행 중 업적 수
-// 단계형 업적: 한 단계를 깨면 다음 단계가 나타남
-const CHAINS=[
-  {id:'practice',name:'연습왕',stat:'practice',unit:'판',steps:[10,20,50,100,200],desc:n=>`연습 ${n}판 완료 (하루 ${PRACTICE_DAILY_MAX}판까지 인정)`},
-  {id:'days',    name:'꾸준함',stat:'days',    unit:'일',steps:[3,5,10,20,50],    desc:n=>`오늘의 퍼즐을 ${n}일 완료`},
-  {id:'triple',  name:'삼관왕',stat:'triples', unit:'회',steps:[1,3,10,20],       desc:n=>`하루에 세 판 모두 완료 ${n}회`},
-  {id:'perfect', name:'무결점',stat:'perfects',unit:'회',steps:[1,5,15,30],       desc:n=>`하트 3개 그대로 완료 ${n}회`}
+/* ===== 왕관 포인트 · 업적 (index.html과 Code.gs가 똑같이 씀) ===== */
+const PTS = { 6: 10, 7: 20, 8: 30, 9: 15 }, HEART_PTS = 5, TRIPLE_PTS = 20;
+const PRACTICE_DAILY_MAX = 20, PRACTICE_MIN_MS = 10000, ACH_SHOW = 5;
+// 업적은 이 순서대로 하나씩 열려요. 앞에서부터 아직 못 깬 5개만 도전할 수 있어요.
+// [아이디, 포인트, 종류(n: 누적 기록, t: 최고 기록 시간, e: 그 판의 상황), 기록 이름, 목표]
+const ACH_ORDER = [
+  ['first',20,'n','clears',1], ['c6_1',20,'n','c6',5], ['practice1',20,'n','practice',10], ['perfect1',20,'n','perfects',1],
+  ['days1',20,'n','days',3], ['solo',20,'e','solo',0], ['c7_1',20,'n','c7',5], ['triple1',20,'n','triples',1],
+  ['nh1',20,'n','nh',5], ['tight',20,'e','tight',0], ['master',20,'n','c8',1], ['streak1',20,'n','streak',3],
+  ['sp6_1',20,'t','best6',120000], ['practice2',30,'n','practice',20], ['hint1',20,'e','hint1',0], ['c6_2',30,'n','c6',20],
+  ['sp7_1',20,'t','best7',180000], ['morning',20,'e','morning',0], ['days2',30,'n','days',5], ['perfect2',30,'n','perfects',5],
+  ['okdol',20,'e','okdol',0], ['c8_1',20,'n','c8',5], ['p8_1',20,'n','p8',10], ['sp8_1',20,'t','best8',300000], ['c9_1',30,'n','c9',1],
+  ['triple2',30,'n','triples',3], ['streak2',30,'n','streak',5], ['nh2',30,'n','nh',20], ['sp6_2',30,'t','best6',60000],
+  ['perfectday',30,'e','perfectday',0], ['friday',20,'e','friday',0], ['c7_2',30,'n','c7',20], ['practice3',40,'n','practice',50], ['p9_1',30,'n','p9',10],
+  ['days3',40,'n','days',10], ['comeback',30,'e','comeback',0], ['sp7_2',30,'t','best7',90000], ['nhtriple',30,'e','nhtriple',0],
+  ['perfect3',40,'n','perfects',15], ['streak3',40,'n','streak',10], ['c8_2',30,'n','c8',20], ['sp8_2',30,'t','best8',150000], ['gem',40,'e','gem',0],
+  ['triple3',40,'n','triples',10], ['c9_2',40,'n','c9',5], ['sp6_3',40,'t','best6',35000], ['p8_2',30,'n','p8',30], ['c6_3',40,'n','c6',50],
+  ['nh3',40,'n','nh',50], ['days4',60,'n','days',20], ['sp9_1',40,'t','best9',300000], ['sp7_3',40,'t','best7',50000], ['practice4',60,'n','practice',100],
+  ['c7_3',40,'n','c7',50], ['p9_2',40,'n','p9',30], ['streak4',60,'n','streak',20], ['perfect4',60,'n','perfects',30], ['sp8_3',40,'t','best8',90000],
+  ['c8_3',40,'n','c8',50], ['c9_3',60,'n','c9',20], ['triple4',60,'n','triples',20], ['p8_3',40,'n','p8',60], ['c6_4',60,'n','c6',100],
+  ['c7_4',60,'n','c7',100], ['c8_4',60,'n','c8',100], ['days5',80,'n','days',50], ['practice5',80,'n','practice',200]
 ];
-// 한 번만 있는 업적
-const ONEOFFS=[
-  {id:'first', name:'첫 왕관', desc:'오늘의 퍼즐을 처음 완료', test:i=>true},
-  {id:'solo',  name:'홀로서기',desc:'힌트 없이 보통 완료',     test:i=>i.size===7&&i.hints===0},
-  {id:'master',name:'성 함락', desc:'어려움 완료',             test:i=>i.size===8},
-  {id:'fast7', name:'번개손',  desc:'보통을 1분 안에 완료',    test:i=>i.size===7&&i.ms<=60000},
-  {id:'fast8', name:'질풍',    desc:'어려움을 2분 안에 완료',  test:i=>i.size===8&&i.ms<=120000}
-];
+function achStat(p, key) { return key === 'days' ? (Number(p.days) || 0) : (Number((p.stats || {})[key]) || 0); }
+function achDone(a, p, i) {
+  const kind = a[2], key = a[3], goal = a[4];
+  if (kind === 'n') return achStat(p, key) >= goal;
+  if (kind === 't') { const b = achStat(p, key); return b > 0 && b <= goal; }
+  if (!i || i.kind !== 'daily') return false;
+  if (key === 'okdol') return !!i.failed;
+  if (i.failed) return false;
+  if (key === 'solo') return i.size === 7 && i.hints === 0;
+  if (key === 'tight') return i.hearts === 1;
+  if (key === 'hint1') return i.hints === 1;
+  if (key === 'morning') return i.hour < 9;
+  if (key === 'perfectday') return i.size !== 9 && i.clearsToday === 3 && i.today.every(x => x.hearts === 3);
+  if (key === 'friday') return i.size !== 9 && i.clearsToday === 3 && i.weekday === 5;
+  if (key === 'comeback') return i.hearts < 3 && i.prevBest > 0 && i.ms < i.prevBest;
+  if (key === 'gem') return i.size === 9 && i.hearts === 3;
+  if (key === 'nhtriple') return i.size !== 9 && i.clearsToday === 3 && i.today.every(x => x.hints === 0);
+  return false;
+}
+function achActive(p) {
+  const out = [];
+  for (let k = 0; k < ACH_ORDER.length && out.length < ACH_SHOW; k++) if (p.ach.indexOf(ACH_ORDER[k][0]) < 0) out.push(ACH_ORDER[k]);
+  return out;
+}
+function checkAch(p, i) {
+  let gained = 0; const newAch = [];
+  for (let guard = 0; guard < ACH_ORDER.length; guard++) {
+    const hit = achActive(p).find(a => achDone(a, p, i));
+    if (!hit) break;
+    p.ach.push(hit[0]); newAch.push(hit[0]); gained += hit[1];
+  }
+  return { gained: gained, newAch: newAch };
+}
+function prevSchoolDay(date) {
+  const d = new Date(date + 'T00:00:00Z');
+  do { d.setUTCDate(d.getUTCDate() - 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  return d.toISOString().slice(0, 10);
+}
+/** 오늘의 퍼즐 완료. i: {kind:'daily', date, size, ms, hearts, hints, failed, clearsToday, today:[{hearts,hints}], hour, weekday} */
+function applyDaily(p, i) {
+  p.stats = p.stats || {};
+  const st = p.stats;
+  if (i.failed) { const a = checkAch(p, i); p.points += a.gained; return a; }
+  let gained = PTS[i.size] + HEART_PTS * i.hearts;
+  // 하루 세 판은 쉬움·보통·어려움만 셈 (도전은 따로)
+  if (i.size !== 9 && i.clearsToday === 3) { gained += TRIPLE_PTS; st.triples = (Number(st.triples) || 0) + 1; }
+  st.clears = (Number(st.clears) || 0) + 1;
+  st['c' + i.size] = (Number(st['c' + i.size]) || 0) + 1;
+  if (i.hints === 0) st.nh = (Number(st.nh) || 0) + 1;
+  if (i.hearts === 3) st.perfects = (Number(st.perfects) || 0) + 1;
+  if (p.lastDay !== i.date) { p.days = (Number(p.days) || 0) + 1; p.lastDay = i.date; }
+  if (st.sDay !== i.date) { st.streak = (st.sDay && st.sDay >= prevSchoolDay(i.date)) ? (Number(st.streak) || 0) + 1 : 1; st.sDay = i.date; }
+  const bk = 'best' + i.size; i.prevBest = Number(st[bk]) || 0;
+  if (!i.prevBest || i.ms < i.prevBest) st[bk] = i.ms;
+  const a = checkAch(p, i);
+  gained += a.gained; p.points += gained;
+  return { gained: gained, newAch: a.newAch };
+}
+/** 연습 완료: 포인트는 업적으로만. 하루 20판까지, 10초 이상 걸린 판만 인정 */
+function applyPractice(p, date, ms, size) {
+  p.stats = p.stats || {};
+  const st = p.stats;
+  if (st.pDate !== date) { st.pDate = date; st.pCount = 0; }
+  if (ms < PRACTICE_MIN_MS || st.pCount >= PRACTICE_DAILY_MAX) return { counted: false, gained: 0, newAch: [] };
+  st.pCount += 1; st.practice = (Number(st.practice) || 0) + 1;
+  if (size === 8) st.p8 = (Number(st.p8) || 0) + 1;
+  if (size === 9) st.p9 = (Number(st.p9) || 0) + 1;
+  const a = checkAch(p, { kind: 'practice', size: size });
+  p.points += a.gained;
+  return { counted: true, gained: a.gained, newAch: a.newAch };
+}
+
+// 화면에 보이는 업적 이름과 설명
 const ROMAN=['I','II','III','IV','V'];
+const ACH_SERIES={c6:'쉬움 정복',c7:'보통 정복',c8:'어려움 정복',practice:'연습왕',perfect:'무결점',days:'꾸준함',triple:'삼관왕',
+  nh:'혼자 힘으로',streak:'개근',sp6:'쉬움 번개',sp7:'보통 번개',sp8:'어려움 번개',p8:'연습 어려움',
+  c9:'도전 정복',p9:'연습 도전',sp9:'도전 번개'};
+const ACH_ONE={first:['첫 왕관','오늘의 퍼즐을 처음 완료'],master:['성 함락','어려움을 처음 완료'],
+  solo:['홀로서기','오늘의 퍼즐 보통을 힌트 없이 완료'],tight:['아슬아슬','하트 1개만 남기고 완료'],
+  hint1:['한 걸음 힌트','힌트를 딱 1번만 보고 완료'],morning:['아침 활동','오전 9시 전에 오늘의 퍼즐 완료'],
+  okdol:['오뚝이','GAME OVER가 됐어도 끝까지 완성'],perfectday:['완벽한 하루','하루 세 판 모두 하트 3개로 완료'],
+  friday:['불금','금요일에 세 판 모두 완료'],comeback:['역전승','하트를 잃고도 내 최고 기록 갱신'],
+  nhtriple:['힌트 없는 삼관왕','하루 세 판 모두 힌트 없이 완료'],gem:['보석 왕관','도전을 하트 3개로 완료']};
+const SIZE_NAME={6:'쉬움',7:'보통',8:'어려움',9:'도전'};
+function achDef(id){return ACH_ORDER.find(a=>a[0]===id)}
 function achName(id){
-  const o=ONEOFFS.find(x=>x.id===id);if(o)return o.name;
-  const c=CHAINS.find(x=>id.startsWith(x.id)&&/^\d+$/.test(id.slice(x.id.length)));
-  return c?`${c.name} ${ROMAN[Number(id.slice(c.id.length))-1]}`:'';
+  if(ACH_ONE[id])return ACH_ONE[id][0];
+  const m=/^([a-z]+?)(\d)?_?(\d)$/.exec(id);if(!m)return'';
+  const pre=m[2]?m[1]+m[2]:m[1],tier=Number(m[3]);
+  return ACH_SERIES[pre]?`${ACH_SERIES[pre]} ${ROMAN[tier-1]}`:'';
+}
+function secText(ms){const s=Math.round(ms/1000);return s>=60?`${Math.floor(s/60)}분${s%60?` ${s%60}초`:''}`:`${s}초`}
+function achDesc(a){
+  const key=a[3],goal=a[4];
+  if(ACH_ONE[a[0]])return ACH_ONE[a[0]][1];
+  if(a[2]==='t')return`${SIZE_NAME[key.slice(4)]}을 ${secText(goal)} 안에 완료`;
+  return{c6:`쉬움을 ${goal}판 완료`,c7:`보통을 ${goal}판 완료`,c8:`어려움을 ${goal}판 완료`,c9:`오늘의 도전을 ${goal}판 완료`,p9:`연습 도전 ${goal}판 완료`,practice:`연습 ${goal}판 완료 (하루 ${PRACTICE_DAILY_MAX}판까지 인정)`,
+    perfects:`하트 3개로 ${goal}번 완료`,days:`오늘의 퍼즐을 ${goal}일 완료`,triples:`하루 세 판 모두 완료 ${goal}번`,nh:`힌트 없이 ${goal}판 완료`,
+    streak:`학교 오는 날 기준 ${goal}일 연속 완료`,p8:`연습 어려움 ${goal}판 완료`,clears:'오늘의 퍼즐을 처음 완료'}[key]||'';
 }
 // 판 색 테마 (영역 색 8개 + 판 테두리 + X 색)
 const THEMES=[
@@ -574,7 +688,7 @@ const store={
 function todayKST(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}
 function fmt(ms){ms=Math.max(0,ms);const s=Math.floor(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
 function deviceId(){let id=store.get('queens:device');if(!id){id=Math.random().toString(36).slice(2)+Date.now().toString(36);store.set('queens:device',id)}return id}
-function levelOf(n){return LEVELS.find(l=>l.n===n)}
+function levelOf(n){return ALL_LEVELS.find(l=>l.n===n)}
 
 /* ---------- 퍼즐 생성 (정답이 하나뿐인 문제만) ---------- */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -623,7 +737,47 @@ function logicScore(n,reg){
   }
   return placed.length===n?score:-1;
 }
-function generate(n,seedStr){
+function deepSteps(n,reg){
+  // 도전 문제 확인: 요령 세 가지로 막히면 "여기에 놓아 보면 어긋나는 칸"을 하나 지우고 다시 풂. 그렇게 지운 횟수 (-1: 그래도 안 풀림)
+  const N=n*n,R=i=>i/n|0,C=i=>i%n;
+  const hits=(a,b)=>R(a)===R(b)||C(a)===C(b)||reg[a]===reg[b]||(Math.abs(R(a)-R(b))<=1&&Math.abs(C(a)-C(b))<=1);
+  const groups=[];
+  for(let g=0;g<n;g++){const a=[];for(let i=0;i<N;i++)if(reg[i]===g)a.push(i);groups.push({k:'g',cells:a})}
+  for(let r=0;r<n;r++){const a=[];for(let c=0;c<n;c++)a.push(r*n+c);groups.push({k:'r',cells:a})}
+  for(let c=0;c<n;c++){const a=[];for(let r=0;r<n;r++)a.push(r*n+c);groups.push({k:'c',cells:a})}
+  const place=(alive,placed,i)=>{placed.push(i);for(let j=0;j<N;j++)if(hits(i,j))alive[j]=false};
+  const run=(alive,placed)=>{
+    for(let guard=0;guard<400;guard++){
+      if(placed.length===n)return 1;
+      const og=groups.filter(gr=>!gr.cells.some(i=>placed.indexOf(i)>=0)).map(gr=>({k:gr.k,cells:gr.cells.filter(i=>alive[i])}));
+      if(og.some(gr=>gr.cells.length===0))return -1;
+      const one=og.find(gr=>gr.cells.length===1);
+      if(one){place(alive,placed,one.cells[0]);continue}
+      let progress=false;
+      for(const gr of og){
+        if(gr.k==='g'){for(const f of [R,C]){const v=f(gr.cells[0]);if(!gr.cells.every(i=>f(i)===v))continue;
+          for(let j=0;j<N;j++)if(alive[j]&&f(j)===v&&gr.cells.indexOf(j)<0){alive[j]=false;progress=true}}}
+        else{const g=reg[gr.cells[0]];if(!gr.cells.every(i=>reg[i]===g))continue;
+          for(let j=0;j<N;j++)if(alive[j]&&reg[j]===g&&gr.cells.indexOf(j)<0){alive[j]=false;progress=true}}
+        if(progress)break;
+      }
+      if(progress)continue;
+      for(let i=0;i<N&&!progress;i++){if(alive[i]&&og.some(gr=>gr.cells.indexOf(i)<0&&gr.cells.every(j=>hits(i,j)))){alive[i]=false;progress=true}}
+      if(!progress)return 0;
+    }
+    return 0;
+  };
+  const alive=new Array(N).fill(true),placed=[];let steps=0;
+  for(let k=0;k<100;k++){
+    const r=run(alive,placed);if(r===1)return steps;if(r<0)return -1;
+    let found=false;
+    for(let i=0;i<N&&!found;i++){if(!alive[i])continue;const a2=alive.slice(),p2=placed.slice();place(a2,p2,i);
+      if(run(a2,p2)<0){alive[i]=false;steps++;found=true}}
+    if(!found)return -1;
+  }
+  return -1;
+}
+function generate(n,seedStr,hard){
   const rnd=mulberry32(hashStr(seedStr));
   for(let attempt=0;attempt<500;attempt++){
     const sol=randPerm(n,rnd);const reg=new Array(n*n).fill(-1);const solCell=new Set();
@@ -641,7 +795,8 @@ function generate(n,seedStr){
         if(!nb.length||!connectedWithout(reg,n,g,i))continue;reg[i]=nb[0];moved=true;break}
       if(!moved)break;
     }
-    if(ok&&logicScore(n,reg)<0)ok=false;   // 요령으로 끝까지 풀리는 문제만
+    // 보통은 요령으로 끝까지 풀리는 문제만, 도전은 요령만으로는 막히지만 몇 번 "놓아 보기"로 풀리는 문제만
+    if(ok){if(hard){const d=logicScore(n,reg)<0?deepSteps(n,reg):-1;ok=d>=3&&d<=8}else ok=logicScore(n,reg)>=0}
     if(ok){const colors=shuffle([...Array(COLOR_COUNT).keys()],rnd).slice(0,n);return{n,reg,sol,colors}}
   }
   throw new Error('퍼즐 생성 실패');
@@ -649,14 +804,20 @@ function generate(n,seedStr){
 
 // 오늘의 퍼즐: 그날의 기본 문제 4개(풀이 난이도가 비슷한 것) 중 하나를 학생마다 돌리고·뒤집고·색을 섞어서 냄
 function dailyPuzzle(n,date,name){
+  const lv=n;if(lv===9)n=8;   // 9는 '도전': 8×8 판의 어려운 문제
+  const h=hashStr(date+'|'+lv+'|'+name);
+  let base;
+  if(lv===9)base=generate(8,'queens-'+date+'-9-b'+(h%4),true);
+  else{
   const cands=[];
   for(let k=0;k<8;k++){const p=generate(n,'queens-'+date+'-'+n+'-b'+k);cands.push({p:p,score:logicScore(n,p.reg)})}
   cands.sort((a,b)=>a.score-b.score);
   let best=0,span=1e9;
   for(let k=0;k+3<cands.length;k++){const s=cands[k+3].score-cands[k].score;if(s<span){span=s;best=k}}
   const bases=[cands[best].p,cands[best+1].p,cands[best+2].p,cands[best+3].p];
-  const h=hashStr(date+'|'+n+'|'+name);
-  const base=bases[h%4],t=Math.floor(h/4)%8;
+  base=bases[h%4];
+  }
+  const t=Math.floor(h/4)%8;
   const map=(r,c)=>[[r,c],[c,n-1-r],[n-1-r,n-1-c],[n-1-c,r],[r,n-1-c],[n-1-r,c],[c,r],[n-1-c,n-1-r]][t];
   const reg=new Array(n*n),sol=new Array(n);
   for(let r=0;r<n;r++)for(let c=0;c<n;c++){const m=map(r,c);reg[m[0]*n+m[1]]=base.reg[r*n+c]}
@@ -721,7 +882,7 @@ function renderKingBar(){
 let kingsAt=0;
 function refreshKings(){
   if(!ONLINE){   // 서버 없이 쓸 때는 혼자뿐이라, 완료한 판이 있으면 내가 1등
-    const k={total:myTotal().count?me:''};LEVELS.forEach(l=>{k[l.n]=(dayInfo(l.n)||{}).status==='clear'?me:''});
+    const k={total:myTotal().count?me:''};ALL_LEVELS.forEach(l=>{k[l.n]=(dayInfo(l.n)||{}).status==='clear'?me:''});
     setKings(k);return;
   }
   if(Date.now()-kingsAt<20000)return;
@@ -729,32 +890,14 @@ function refreshKings(){
   api('kings',{date:today},1).then(j=>{setKings(j.kings);if($('home').classList.contains('on'))renderProfile()}).catch(()=>{});
 }
 // 서버 없이 쓸 때 이 기기에서 같은 규칙으로 계산 (Code.gs와 같음)
-function statOf(p,stat){return stat==='days'?p.days:(Number((p.stats||{})[stat])||0)}
-function checkAch(p,info){
-  let gained=0;const newAch=[];
-  if(info)ONEOFFS.forEach(a=>{if(!p.ach.includes(a.id)&&a.test(info)){p.ach.push(a.id);newAch.push(a.id);gained+=REWARD.ACH}});
-  CHAINS.forEach(c=>c.steps.forEach((step,t)=>{const id=c.id+(t+1);if(!p.ach.includes(id)&&statOf(p,c.stat)>=step){p.ach.push(id);newAch.push(id);gained+=TIER_POINTS[t]}}));
-  return{gained,newAch};
-}
+function kstNow(){const d=new Date(Date.now()+9*3600e3);return{hour:d.getUTCHours(),weekday:d.getUTCDay()}}
 function applyRewardLocal(info){
-  if(info.failed)return{gained:0,newAch:[]};
-  prof.stats=prof.stats||{};
-  let gained=REWARD.BASE[info.size]+REWARD.HEART*info.hearts;
-  if(info.clearsToday===3){gained+=REWARD.TRIPLE;prof.stats.triples=(prof.stats.triples||0)+1}
-  if(info.hearts===3)prof.stats.perfects=(prof.stats.perfects||0)+1;
-  if(prof.lastDay!==info.date){prof.days+=1;prof.lastDay=info.date}
-  const a=checkAch(prof,info);gained+=a.gained;
-  prof.points+=gained;store.set(profKey(),prof);
-  return{gained,newAch:a.newAch};
+  const t=kstNow();
+  const today=LEVELS.map(l=>{const r=store.get(saveKey(l.n),null);return r&&r.status==='clear'&&!r.failed?{hearts:r.hearts,hints:CONFIG.DAILY_HINTS[l.n]-(r.hintsLeft??CONFIG.DAILY_HINTS[l.n])}:null}).filter(Boolean);
+  const rw=applyDaily(prof,Object.assign({kind:'daily',today,clearsToday:today.length,hour:t.hour,weekday:t.weekday},info));
+  store.set(profKey(),prof);return rw;
 }
-function applyPracticeLocal(ms){
-  const st=prof.stats=prof.stats||{};
-  if(st.pDate!==today){st.pDate=today;st.pCount=0}
-  if(ms<PRACTICE_MIN_MS||st.pCount>=PRACTICE_DAILY_MAX)return{counted:false,gained:0,newAch:[]};
-  st.pCount++;st.practice=(st.practice||0)+1;
-  const a=checkAch(prof,null);prof.points+=a.gained;store.set(profKey(),prof);
-  return{counted:true,gained:a.gained,newAch:a.newAch};
-}
+function applyPracticeLocal(ms,size){const rw=applyPractice(prof,today,ms,size);store.set(profKey(),prof);return rw}
 
 async function api(action,data,tries=3){
   let last=null;
@@ -830,6 +973,7 @@ let starting=false;
 function introKey(){return `queens:${me}:intro`}
 async function startGame(mode,n){
   if(starting)return;
+  if(n===9&&!challengeOpen(mode)){toast(mode==='daily'?'오늘의 어려움을 깨면 도전이 열려요.':'오늘의 퍼즐 어려움을 한 번 깨면 연습 도전이 열려요.',2600);SFX.wrong();return}
   // 하루 처음 오늘의 퍼즐을 시작할 때 한 번만 규칙 안내
   if(mode==='daily'&&store.get(introKey(),'')!==today){
     const st=(dayInfo(n)||{}).status;
@@ -838,9 +982,10 @@ async function startGame(mode,n){
       $('dailyIntro').classList.add('on');return;
     }
   }
+  const sz=boardSize(n);   // n은 단계(6·7·8, 9=도전), sz는 판 크기
   const seed=mode==='daily'?`queens-${today}-${n}`:`practice-${Date.now()}-${Math.floor(Math.random()*1e9)}`;
-  const P=mode==='daily'?dailyPuzzle(n,today,me):generate(n,seed);
-  const g={mode,n,seed,date:today,...P,marks:new Array(n*n).fill(0),hist:[],hearts:CONFIG.HEARTS,
+  const P=mode==='daily'?dailyPuzzle(n,today,me):generate(sz,seed,n===9);
+  const g={mode,lv:n,seed,date:today,...P,n:sz,marks:new Array(sz*sz).fill(0),hist:[],hearts:CONFIG.HEARTS,
      hintsLeft:mode==='daily'?CONFIG.DAILY_HINTS[n]:Infinity,startedAt:Date.now(),status:'play',finishMs:0,failed:false,pending:false};
   if(mode==='daily'){
     const loc=store.get(saveKey(n),null);
@@ -869,19 +1014,20 @@ async function startGame(mode,n){
   }
   G=g;
   const lv=levelOf(n);
-  $('gTitle').textContent=`${lv.name} ${n}×${n}`;
-  $('gSub').textContent=mode==='daily'?`★ 오늘의 퍼즐 ${today.slice(5).replace('-','.')}`:'연습 모드';
+  $('gTitle').textContent=`${n===9?'◆ ':''}${lv.name} ${sz}×${sz}`;
+  $('gSub').textContent=mode==='daily'?`★ 오늘의 ${n===9?'도전':'퍼즐'} ${today.slice(5).replace('-','.')}`:(n===9?'연습 도전':'연습 모드');
   $('assistView').textContent=assist()?'자동 X ON':'';
-  $('hintBtn').style.visibility='visible';
+  $('hintBtn').style.visibility=mode==='daily'&&n===9?'hidden':'visible';   // 오늘의 도전은 힌트 없음
   buildBoard();render();
-  setMsg(G.failed?'over':'info',G.failed?'GAME OVER! 순위에는 오르지 않지만 끝까지 풀어 보세요.':'탭: X → 왕관 → 지우기 · 꾹 누르기: 지우기 · 끌기: X 여러 칸');
+  const tip=n===9?'◆ 도전! 요령만으로 막히면 "여기에 놓으면?" 하고 끝까지 따져 봐요.'+(mode==='daily'?' (힌트 없음)':''):'탭: X → 왕관 → 지우기 · 꾹 누르기: 지우기 · 끌기: X 여러 칸';
+  setMsg(G.failed?'over':'info',G.failed?'GAME OVER! 순위에는 오르지 않지만 끝까지 풀어 보세요.':tip);
   show('game');
   clearInterval(timerId);timerId=setInterval(tick,250);tick();
 }
 function assist(){return G.n<=CONFIG.ASSIST_MAX_SIZE}
 function persist(){
   if(!G||G.mode!=='daily')return;
-  store.set(saveKey(G.n),{marks:G.marks,hearts:G.hearts,hintsLeft:G.hintsLeft,startedAt:G.startedAt,status:G.status,finishMs:G.finishMs,failed:G.failed});
+  store.set(saveKey(G.lv),{marks:G.marks,hearts:G.hearts,hintsLeft:G.hintsLeft,startedAt:G.startedAt,status:G.status,finishMs:G.finishMs,failed:G.failed});
 }
 function tick(){
   if(!G)return;
@@ -967,7 +1113,7 @@ function setMark(i,v){
     let over=false;
     if(G.mode==='daily'&&!G.failed){
       G.hearts=Math.max(0,G.hearts-1);
-      if(ONLINE)enqueue('miss',{name:me,pin,date:G.date,size:G.n});
+      if(ONLINE)enqueue('miss',{name:me,pin,date:G.date,size:G.lv});
       if(G.hearts===0){over=true;G.failed=true;G.status='fail';setMsg('over','GAME OVER! 하트를 다 썼어요. 순위에는 오르지 않지만 끝까지 풀어 보세요.')}
       else setMsg('miss',`MISS! 하트 −1 · 빨간 왕관을 지우고 다시 생각해 보세요.`);
     }else if(!G.failed)setMsg('miss','MISS! 여기는 왕관 자리가 아니에요. 빨간 왕관을 지워 보세요.');
@@ -1001,7 +1147,7 @@ function checkClear(){
   setTimeout(()=>{failedRun?SFX.over():SFX.clear();if(!failedRun)clearEffect()},G.n*90);
   const wait=G.n*90+900+({spark:0,coronation:1500}[equipped('effect').id]??600);
   if(G.mode==='daily'){
-    const n=G.n;
+    const n=G.lv;
     // 서버 답이 오기 전까지는 이 기기에서 잰 값으로 먼저 보여 줌
     days[n]=Object.assign(days[n]||{},{status:failedRun?'fail':'clear',ms:G.finishMs,hearts:G.hearts,score:failedRun?0:scoreOf(G.finishMs,G.hearts)});
     const hints=CONFIG.DAILY_HINTS[n]-G.hintsLeft;
@@ -1009,8 +1155,7 @@ function checkClear(){
     if(ONLINE){G.pending=true;enqueue('finish',{name:me,pin,date:G.date,size:n,cols:G.sol.slice(),hints}).then(()=>{if(G&&G.pending)renderScore()})}
     else{
       const before=prof.points;
-      const clearsToday=LEVELS.filter(l=>{const r=dayInfo(l.n);return r&&r.status==='clear'}).length;
-      G.reward=applyRewardLocal({date:G.date,size:n,ms:G.finishMs,hearts:G.hearts,hints,clearsToday,failed:failedRun});
+      G.reward=applyRewardLocal({date:G.date,size:n,ms:G.finishMs,hearts:G.hearts,hints,failed:failedRun});
       setTimeout(()=>announceReward(G.reward,before),wait+400);
     }
     setTimeout(showResult,wait);
@@ -1026,7 +1171,7 @@ function onFinished(size,j){
   const before=prof.points;
   if(j.prof){prof=j.prof;store.set(profKey(),prof)}
   const rw=j.already?null:{gained:j.gained||0,newAch:j.newAch||[]};
-  if(G&&G.mode==='daily'&&G.n===Number(size)){
+  if(G&&G.mode==='daily'&&G.lv===Number(size)){
     G.pending=false;G.finishMs=j.ms;G.hearts=j.hearts;G.failed=j.status==='fail';G.reward=rw;
     if($('result').classList.contains('on')){renderScore();loadRanking(today,rankSize)}
   }
@@ -1035,19 +1180,16 @@ function onFinished(size,j){
 
 /* ---------- 연습 기록 ---------- */
 function practiceLine(rw){
-  const st=prof.stats||{},c=CHAINS[0];
-  const t=c.steps.findIndex((s,k)=>!prof.ach.includes(c.id+(k+1)));
-  const goal=t<0?null:c.steps[t];
-  const head=rw&&!rw.counted?((st.pCount||0)>=PRACTICE_DAILY_MAX&&st.pDate===today?`오늘 연습 인정 ${PRACTICE_DAILY_MAX}판을 다 채웠어요.`:'10초 안에 끝난 판은 세지 않아요.'):`연습 기록 +1판`;
-  const prog=goal?` · 연습왕 ${ROMAN[t]} ${st.practice||0}/${goal}판`:'';
-  return `${head}${prog} · 오늘 ${st.pDate===today?st.pCount||0:0}/${PRACTICE_DAILY_MAX}`;
+  const st=prof.stats||{};
+  const head=rw&&!rw.counted?((st.pCount||0)>=PRACTICE_DAILY_MAX&&st.pDate===today?`오늘 연습 인정 ${PRACTICE_DAILY_MAX}판을 다 채웠어요.`:'10초 안에 끝난 판은 세지 않아요.'):`연습 기록 +1판 (모두 ${st.practice||0}판)`;
+  return `${head} · 오늘 ${st.pDate===today?st.pCount||0:0}/${PRACTICE_DAILY_MAX}`;
 }
 function reportPractice(){
   const info=$('clearInfo'),ms=G.finishMs;
-  if(!ONLINE){const before=prof.points,rw=applyPracticeLocal(ms);info.textContent=practiceLine(rw);if(rw.newAch.length)setTimeout(()=>announceReward(rw,before),1800);return}
+  if(!ONLINE){const before=prof.points,rw=applyPracticeLocal(ms,G.lv);info.textContent=practiceLine(rw);if(rw.newAch.length)setTimeout(()=>announceReward(rw,before),1800);return}
   info.textContent='연습 기록을 보내는 중...';
   const before=prof.points;
-  api('practice',{name:me,pin,seed:G.seed,size:G.n,cols:G.sol.slice(),ms}).then(j=>{
+  api('practice',{name:me,pin,seed:G.seed,size:G.lv,cols:G.sol.slice(),ms}).then(j=>{
     if(j.prof){prof=j.prof;store.set(profKey(),prof)}
     info.textContent=practiceLine(j);
     if(j.newAch&&j.newAch.length)setTimeout(()=>announceReward(j,before),800);
@@ -1274,20 +1416,28 @@ function fillRank(list,rows,n,limit){
     const t=n===0?r.total:r.score;
     d.innerHTML=`<span class="no" style="color:${mine?'#1D1A2F':col}">${ord[k]||(k+1)+'TH'}</span><span class="nm"></span><span style="font-size:12px;color:#5C567A">${mid}</span><span class="t">${fmt(t)}</span>`;
     const nm=d.querySelector('.nm');
-    nm.innerHTML=(r.points!==undefined?badgeHTML(r.points):'')+'<span class="nmt"></span>'+kingBadges(r.name);
+    nm.innerHTML=(r.points!==undefined?badgeHTML(r.points):'')+'<span class="nmt"></span>'+(r.gem||n===9?' <b class="gem" title="오늘의 도전 성공">◆</b> ':'')+kingBadges(r.name);
     nm.querySelector('.nmt').textContent=r.name;
     list.appendChild(d);
   });
 }
 function renderRankTabs(){
   const t=$('rankTabs');t.innerHTML='';
-  [{n:0,name:'종합'},...LEVELS].forEach(l=>{const b=document.createElement('button');b.className='pick'+(l.n===rankSize?' on':'');b.style.fontSize='12px';
+  [{n:0,name:'종합'},...ALL_LEVELS].forEach(l=>{const b=document.createElement('button');b.className='pick'+(l.n===rankSize?' on':'');b.style.fontSize='12px';
     b.textContent=(l.n===rankSize?'▶':'')+l.name;b.onclick=()=>{rankSize=l.n;renderRankTabs();loadRanking(today,l.n)};t.appendChild(b)});
 }
+// 종합: 쉬움·보통·어려움 완료 판 수 → 합산 시간. 도전을 깨면 합산 시간에서 30초를 빼 줌
 function myTotal(){
   let count=0,total=0;
   LEVELS.forEach(l=>{const r=dayInfo(l.n);if(r&&r.status==='clear'){count++;total+=r.score||0}});
-  return{count,total};
+  const gem=(dayInfo(9)||{}).status==='clear';
+  if(gem)total=Math.max(0,total-CONFIG.CH_BONUS_MS);
+  return{count,total,gem};
+}
+// 도전이 열렸는지: 오늘의 도전은 그날 어려움을 깨야, 연습 도전은 어려움을 한 번이라도 깼으면
+function challengeOpen(mode){
+  const today8=(dayInfo(8)||{}).status==='clear';
+  return mode==='daily'?today8:today8||Number((prof.stats||{}).c8)>0;
 }
 
 /* ---------- 결과 화면 ---------- */
@@ -1315,16 +1465,17 @@ function renderScore(){
 }
 function renderScoreSending(){const rb=$('resendBtn');if(rb){rb.disabled=true;rb.textContent='보내는 중...'}}
 function showResult(){
-  const n=G.n,lv=levelOf(n),fail=G.failed;
+  const n=G.lv,sz=G.n,lv=levelOf(n),fail=G.failed;
   $('resultTop').style.display='flex';
   $('resTitle').textContent=fail?'GAME OVER':'STAGE CLEAR!';
   $('resTitle').style.color=fail?'#E23B3B':'#FFCC33';
-  $('resSub').textContent=`★ 오늘의 퍼즐 · ${lv.name} ${n}×${n}`+(fail?' · 그래도 완성!':'');
+  $('resSub').textContent=(n===9?'◆ 오늘의 도전 · ':`★ 오늘의 퍼즐 · ${lv.name} `)+`${sz}×${sz}`+(fail?' · 그래도 완성!':'');
   renderScore();
-  rankSize=0;$('rankDate').textContent=today.slice(5).replace('-','.')+' 오늘의 순위';
+  rankSize=n===9?9:0;$('rankDate').textContent=today.slice(5).replace('-','.')+' 오늘의 순위';
   setTimeout(()=>restartAnim($('resTitle'),'stage-in'),300);
-  renderRankTabs();loadRanking(today,0);
-  const next=LEVELS.find(l=>l.n>n&&(dayInfo(l.n)||{}).status!=='clear'&&(dayInfo(l.n)||{}).status!=='fail');
+  renderRankTabs();loadRanking(today,rankSize);
+  let next=LEVELS.find(l=>l.n>n&&(dayInfo(l.n)||{}).status!=='clear'&&(dayInfo(l.n)||{}).status!=='fail');
+  if(!next&&n!==9&&challengeOpen('daily')&&!(dayInfo(9)||{}).status)next=CHALLENGE;   // 어려움까지 깼으면 도전으로
   $('resNext').textContent=next?`NEXT ▶ ${next.name}`:'처음으로';
   $('resNext').onclick=()=>next?startGame('daily',next.n):goHome();
   show('result');
@@ -1377,7 +1528,17 @@ function goHome(){
     b.innerHTML=`<span class="n">${l.name} <span class="s" style="font-weight:400">${l.n}×${l.n}</span></span><span class="s" style="min-height:14px">${sub}</span>${tag}`;
     b.onclick=()=>{SFX.tap();startGame('daily',l.n)};wrap.appendChild(b);
   });
-  const tt=myTotal();$('totalView').textContent=`${tt.count}/${LEVELS.length}판 · ${fmt(tt.total)}`;
+  // 도전 카드: 오늘 어려움을 깨면 열림
+  const ch=$('chCard'),cr=dayInfo(9),open=challengeOpen('daily');
+  let ctag='<span class="tag">NEW</span>',ccls='card ch',csub='요령만으로는 막히는 8×8 · 힌트 없음';
+  if(!open){ccls+=' lock';ctag='<span class="tag" style="background:#9C95C9">LOCK</span>';csub='오늘의 어려움을 깨면 열려요'}
+  else if(cr&&cr.status==='clear'){ccls+=' done';ctag='<span class="tag clear">CLEAR</span>';csub=`${fmt(cr.ms)} · 종합 −${CONFIG.CH_BONUS_MS/1000}초`}
+  else if(cr&&cr.status==='fail'){ccls+=' done';ctag='<span class="tag fail">OVER</span>';csub='내일 다시 도전!'}
+  else if(cr){ctag='<span class="tag play">▶ PLAY</span>'}
+  ch.className=ccls;
+  ch.innerHTML=`<span style="display:flex;flex-direction:column;gap:4px"><span class="n"><b class="gem">◆</b> 오늘의 도전 <span class="s" style="font-weight:400">8×8</span></span><span class="s">${csub}</span></span>${ctag.replace('margin-top:auto','')}`;
+  ch.onclick=()=>{SFX.tap();startGame('daily',9)};
+  const tt=myTotal();$('totalView').textContent=`${tt.count}/${LEVELS.length}판 · ${fmt(tt.total)}${tt.gem?' ◆':''}`;
   $('soundBtn').textContent=soundOn?'♪ ON':'♪ OFF';$('soundBtn').classList.toggle('on',soundOn);
   renderPracticePick();
   show('home');
@@ -1385,7 +1546,10 @@ function goHome(){
 // 연습 크기 고르기: 버튼만 다시 그려서 화면 위치가 그대로 유지됨
 function renderPracticePick(){
   const pp=$('practicePick');pp.innerHTML='';
-  LEVELS.forEach(l=>{const b=document.createElement('button');b.className='pick'+(l.n===practiceSize?' on':'');b.textContent=(l.n===practiceSize?'▶':'')+`${l.n}×${l.n}`;b.onclick=()=>{practiceSize=l.n;SFX.tap();renderPracticePick()};pp.appendChild(b)});
+  if(practiceSize===9&&!challengeOpen('practice'))practiceSize=8;
+  ALL_LEVELS.forEach(l=>{const b=document.createElement('button');const lock=l.n===9&&!challengeOpen('practice');
+    b.className='pick'+(l.n===practiceSize?' on':'')+(lock?' lock':'');b.textContent=(l.n===practiceSize?'▶':'')+(l.n===9?'◆도전':`${l.n}×${l.n}`);
+    b.onclick=()=>{if(lock){toast('오늘의 퍼즐 어려움을 한 번 깨면 연습 도전이 열려요.',2600);SFX.wrong();return}practiceSize=l.n;SFX.tap();renderPracticePick()};pp.appendChild(b)});
 }
 
 /* ---------- 왕관 포인트 · 꾸미기 화면 ---------- */
@@ -1428,18 +1592,19 @@ function renderDeck(){
       box.appendChild(b);
     });
   });
-  // 진행 중인 업적: 단계형은 다음 단계 하나, 한 번짜리는 아직 못 깬 것. 진행률 높은 순으로 ACH_SHOW개
-  const goals=[];
-  CHAINS.forEach(c=>{const t=c.steps.findIndex((st,k)=>!prof.ach.includes(c.id+(k+1)));
-    if(t>=0){const cur=Math.min(statOf(prof,c.stat),c.steps[t]);goals.push({name:`${c.name} ${ROMAN[t]}`,desc:c.desc(c.steps[t]),cur,goal:c.steps[t],unit:c.unit,pts:TIER_POINTS[t]})}});
-  ONEOFFS.forEach(o=>{if(!prof.ach.includes(o.id))goals.push({name:o.name,desc:o.desc,cur:0,goal:1,unit:'',pts:REWARD.ACH,one:true})});
-  goals.sort((x,y)=>y.cur/y.goal-x.cur/x.goal);
-  const shown=goals.slice(0,ACH_SHOW);
-  $('achCount').textContent=`달성 ${prof.ach.length}개`;
-  $('achList').innerHTML=shown.map(g=>{const pct=Math.round(g.cur/g.goal*100);
-    return`<div class="ach"><span class="tx"><b>${g.name}</b><span>${g.desc}</span>${g.one?'':`<span class="bar" style="display:block;height:8px;margin-top:4px;border-width:1px"><i style="width:${pct}%"></i></span>`}</span><span style="text-align:right;font-size:11px;font-weight:700;color:#5C567A;white-space:nowrap">${g.one?'':`${g.cur}/${g.goal}${g.unit}<br>`}+${g.pts}P</span></div>`}).join('')
-    +(goals.length?'':'<div class="empty">모든 업적을 달성했어요!</div>')
-    +`<div class="ach" style="justify-content:center;font-size:12px;color:#5C567A">달성한 업적 ${prof.ach.length}개 · 남은 업적 ${goals.length}개</div>`;
+  // 업적은 순서대로 열려요: 앞에서부터 아직 못 깬 5개만 보여 주고, 하나를 깨면 다음 업적이 열려요
+  const active=achActive(prof);
+  const got=prof.ach.filter(id=>achDef(id));
+  $('achCount').textContent=`모은 업적 ${got.length}/${ACH_ORDER.length}`;
+  $('achList').innerHTML=active.map(a=>{
+    let prog='',bar='';
+    if(a[2]==='n'){const cur=Math.min(achStat(prof,a[3]),a[4]);prog=`${cur}/${a[4]}<br>`;bar=`<span class="bar" style="display:block;height:8px;margin-top:4px;border-width:1px"><i style="width:${Math.round(cur/a[4]*100)}%"></i></span>`}
+    else if(a[2]==='t'){const b=achStat(prof,a[3]);prog=b?`최고 ${fmt(b)}<br>`:'기록 없음<br>'}
+    else prog='도전!<br>';
+    return`<div class="ach"><span class="tx"><b>${achName(a[0])}</b><span>${achDesc(a)}</span>${bar}</span><span style="text-align:right;font-size:11px;font-weight:700;color:#5C567A;white-space:nowrap">${prog}+${a[1]}P</span></div>`}).join('')
+    +(active.length?'':'<div class="empty">모든 업적을 모았어요!</div>')
+    +`<div class="ach" style="justify-content:center;font-size:12px;color:#5C567A">하나를 깨면 다음 업적이 열려요 · 남은 업적 ${ACH_ORDER.length-got.length}개</div>`;
+  $('achGot').innerHTML=got.length?got.map(id=>`<span class="badge" style="background:#FFCC33;color:#1D1A2F">${achName(id)}</span>`).join(' '):'<span class="dim">아직 모은 업적이 없어요.</span>';
 }
 let deckTab='theme';
 function setDeckTab(t){
@@ -1525,7 +1690,7 @@ $('deckBack').onclick=goHome;
 $('rankUpDeck').onclick=()=>{$('rankUpModal').classList.remove('on');showDeck()};
 $('resHome').onclick=goHome;
 $('clearHome').onclick=()=>{$('clearModal').classList.remove('on');goHome()};
-$('clearNext').onclick=()=>{$('clearModal').classList.remove('on');startGame('practice',G.n)};
+$('clearNext').onclick=()=>{$('clearModal').classList.remove('on');startGame('practice',G.lv)};
 
 /* ---------- 시작 ---------- */
 async function boot(){
