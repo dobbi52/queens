@@ -570,10 +570,10 @@ const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 function randPerm(n,rnd){const p=[],used=[];const rec=r=>{if(r===n)return true;for(const c of shuffle([...Array(n).keys()],rnd)){if(used[c]||(r>0&&Math.abs(p[r-1]-c)<=1))continue;used[c]=true;p[r]=c;if(rec(r+1))return true;used[c]=false}return false};rec(0);return p}
 function solutions(reg,n,limit){const out=[],p=[],uc=[],ug=[];const rec=(r,prev)=>{if(r===n){out.push(p.slice());return out.length>=limit}for(let c=0;c<n;c++){if(uc[c]||Math.abs(prev-c)<=1)continue;const g=reg[r*n+c];if(ug[g])continue;uc[c]=ug[g]=true;p[r]=c;if(rec(r+1,c))return true;uc[c]=ug[g]=false}return false};rec(0,-9);return out}
 function connectedWithout(reg,n,g,skip){const cells=[];for(let i=0;i<n*n;i++)if(reg[i]===g&&i!==skip)cells.push(i);if(!cells.length)return false;const seen=new Set([cells[0]]),st=[cells[0]];while(st.length){const i=st.pop(),r=i/n|0,c=i%n;for(const[dr,dc]of DIRS){const rr=r+dr,cc=c+dc;if(rr<0||cc<0||rr>=n||cc>=n)continue;const j=rr*n+cc;if(j!==skip&&reg[j]===g&&!seen.has(j)){seen.add(j);st.push(j)}}}return seen.size===cells.length}
-function logicSolvable(n,reg){
+function logicScore(n,reg){
   // 요령 세 가지(칸 하나 남은 줄·색, 한 줄에 갇힌 색, 놓으면 막히는 칸)만으로 끝까지 풀리는지 확인
   const N=n*n,R=i=>i/n|0,C=i=>i%n;
-  const alive=new Array(N).fill(true),placed=[];
+  const alive=new Array(N).fill(true),placed=[];let score=0;
   const hits=(a,b)=>R(a)===R(b)||C(a)===C(b)||reg[a]===reg[b]||(Math.abs(R(a)-R(b))<=1&&Math.abs(C(a)-C(b))<=1);
   const place=i=>{placed.push(i);for(let j=0;j<N;j++)if(hits(i,j))alive[j]=false};
   const groups=[];
@@ -583,7 +583,7 @@ function logicSolvable(n,reg){
   const open=()=>groups.filter(gr=>!gr.cells.some(i=>placed.indexOf(i)>=0)).map(gr=>({k:gr.k,cells:gr.cells.filter(i=>alive[i])}));
   for(let guard=0;guard<400&&placed.length<n;guard++){
     const og=open();
-    if(og.some(gr=>gr.cells.length===0))return false;
+    if(og.some(gr=>gr.cells.length===0))return -1;
     const one=og.find(gr=>gr.cells.length===1);
     if(one){place(one.cells[0]);continue}
     let progress=false;
@@ -591,9 +591,11 @@ function logicSolvable(n,reg){
       if(gr.k==='g'){
         for(const f of [R,C]){const v=f(gr.cells[0]);if(!gr.cells.every(i=>f(i)===v))continue;
           for(let j=0;j<N;j++)if(alive[j]&&f(j)===v&&gr.cells.indexOf(j)<0){alive[j]=false;progress=true}}
+        if(progress)score+=1;
       }else{
         const g=reg[gr.cells[0]];if(!gr.cells.every(i=>reg[i]===g))continue;
         for(let j=0;j<N;j++)if(alive[j]&&reg[j]===g&&gr.cells.indexOf(j)<0){alive[j]=false;progress=true}
+        if(progress)score+=1;
       }
       if(progress)break;
     }
@@ -601,11 +603,11 @@ function logicSolvable(n,reg){
     for(let i=0;i<N&&!progress;i++){
       if(!alive[i])continue;
       const dead=og.some(gr=>gr.cells.indexOf(i)<0&&gr.cells.every(j=>hits(i,j)));
-      if(dead){alive[i]=false;progress=true}
+      if(dead){alive[i]=false;progress=true;score+=3}
     }
-    if(!progress)return false;
+    if(!progress)return -1;
   }
-  return placed.length===n;
+  return placed.length===n?score:-1;
 }
 function generate(n,seedStr){
   const rnd=mulberry32(hashStr(seedStr));
@@ -625,10 +627,29 @@ function generate(n,seedStr){
         if(!nb.length||!connectedWithout(reg,n,g,i))continue;reg[i]=nb[0];moved=true;break}
       if(!moved)break;
     }
-    if(ok&&!logicSolvable(n,reg))ok=false;   // 요령으로 끝까지 풀리는 문제만
+    if(ok&&logicScore(n,reg)<0)ok=false;   // 요령으로 끝까지 풀리는 문제만
     if(ok){const colors=shuffle([...Array(COLOR_COUNT).keys()],rnd).slice(0,n);return{n,reg,sol,colors}}
   }
   throw new Error('퍼즐 생성 실패');
+}
+
+// 오늘의 퍼즐: 그날의 기본 문제 4개(풀이 난이도가 비슷한 것) 중 하나를 학생마다 돌리고·뒤집고·색을 섞어서 냄
+function dailyPuzzle(n,date,name){
+  const cands=[];
+  for(let k=0;k<8;k++){const p=generate(n,'queens-'+date+'-'+n+'-b'+k);cands.push({p:p,score:logicScore(n,p.reg)})}
+  cands.sort((a,b)=>a.score-b.score);
+  let best=0,span=1e9;
+  for(let k=0;k+3<cands.length;k++){const s=cands[k+3].score-cands[k].score;if(s<span){span=s;best=k}}
+  const bases=[cands[best].p,cands[best+1].p,cands[best+2].p,cands[best+3].p];
+  const h=hashStr(date+'|'+n+'|'+name);
+  const base=bases[h%4],t=Math.floor(h/4)%8;
+  const map=(r,c)=>[[r,c],[c,n-1-r],[n-1-r,n-1-c],[n-1-c,r],[r,n-1-c],[n-1-r,c],[c,r],[n-1-c,n-1-r]][t];
+  const reg=new Array(n*n),sol=new Array(n);
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){const m=map(r,c);reg[m[0]*n+m[1]]=base.reg[r*n+c]}
+  for(let r=0;r<n;r++){const m=map(r,base.sol[r]);sol[m[0]]=m[1]}
+  const rnd=mulberry32(h);
+  const colors=shuffle(Array.from({length:8},(_,i)=>i),rnd).slice(0,n);
+  return{n:n,reg:reg,sol:sol,colors:colors};
 }
 
 /* ---------- 서버 연결 ---------- */
@@ -804,7 +825,7 @@ async function startGame(mode,n){
     }
   }
   const seed=mode==='daily'?`queens-${today}-${n}`:`practice-${Date.now()}-${Math.floor(Math.random()*1e9)}`;
-  const P=generate(n,seed);
+  const P=mode==='daily'?dailyPuzzle(n,today,me):generate(n,seed);
   const g={mode,n,seed,date:today,...P,marks:new Array(n*n).fill(0),hist:[],hearts:CONFIG.HEARTS,
      hintsLeft:mode==='daily'?CONFIG.DAILY_HINTS[n]:Infinity,startedAt:Date.now(),status:'play',finishMs:0,failed:false,pending:false};
   if(mode==='daily'){
