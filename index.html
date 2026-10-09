@@ -34,7 +34,10 @@ h2{margin:0;font-size:18px;color:var(--yellow)}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 /* 도전 */
-.card.ch{min-height:0;flex-direction:row;align-items:center;justify-content:space-between;width:100%;background:#2A2245;color:#FFF4D6}
+.card.ch{background:#2A2245;color:#FFF4D6}
+.card.ch .tag{color:#1D1A2F}
+.card.ch.new{animation:chopen .9s steps(1) 2}
+@keyframes chopen{0%,50%{box-shadow:0 0 0 3px #3CBCFC,4px 4px 0 #000}25%,75%{box-shadow:0 0 0 3px #FFCC33,4px 4px 0 #000}}
 .card.ch .s{color:#B8A0F8}
 .card.ch.lock{background:#3A3458;color:#9C95C9}
 .card.ch.done{background:#4A4570}
@@ -258,7 +261,6 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
   <div style="display:flex;flex-direction:column;gap:10px">
     <div class="row"><h2>★ 오늘의 퍼즐</h2><span class="dim" id="todayView"></span></div>
     <div class="grid3" id="dailyCards"></div>
-    <button class="card ch" id="chCard"></button>
     <button class="btn" id="rankLink" style="height:auto;padding:10px 12px;background:var(--blue);color:#fff;box-shadow:inset -3px -3px 0 #22398F,3px 3px 0 #000;display:flex;flex-direction:column;align-items:center;gap:6px">
       <span style="display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700"><svg class="pxi" width="22" height="17" viewBox="0 0 9 7" data-icon="crownFlat"></svg>오늘의 순위표 ▶</span>
       <span style="font-size:12px;color:#D6DEFF">내 합산 <span id="totalView">0/3판 · 00:00</span></span>
@@ -382,7 +384,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <li>칸을 <b>꾹 누르면</b> 표시가 지워져요</li>
     <li>쉬움·보통: <b class="hg">자동 X</b>가 켜져요</li>
     <li>오늘의 퍼즐 힌트: 쉬움·보통 <b class="hg">3번</b>, 어려움 <b class="hg">1번</b> · 연습은 무제한</li>
-    <li><b class="gem">◆</b> 어려움을 깨면 <b>오늘의 도전</b>이 열려요 (힌트 없음 · 종합 합산 시간 <b class="hg">−30초</b>)</li>
+    <li><b class="gem">◆</b> 쉬움·보통·어려움을 모두 깨면 <b>오늘의 도전</b>이 열려요 (힌트 없음 · 종합 합산 시간 <b class="hg">−30초</b>)</li>
     <li>힌트는 누를 때마다 한 단계씩: <b class="hb">볼 곳</b> → <b class="hb">이유와 X칠 칸</b> → <b class="hr">정답 칸</b></li>
     <li>오늘의 퍼즐: <b class="hr">하트 3개</b>, 다 쓰면 순위 제외(계속 풀기 가능)</li>
     <li>남은 하트 1개마다 기록 <b class="hg">−10초</b></li>
@@ -448,7 +450,7 @@ const CONFIG = {
 const LEVELS = [
   {n:6, name:'쉬움'}, {n:7, name:'보통'}, {n:8, name:'어려움'}
 ];
-// 도전: 8×8 판, 요령 세 가지만으로는 막히는 문제. 그날 어려움을 깨면 열림
+// 도전: 8×8 판, 요령 세 가지만으로는 막히는 문제. 그날 세 판을 모두 깨면 어려움 자리에 나타남
 const CHALLENGE = {n:9, name:'도전', size:8};
 const ALL_LEVELS = [...LEVELS, CHALLENGE];
 function boardSize(lv){return lv===9?8:lv}
@@ -973,7 +975,7 @@ let starting=false;
 function introKey(){return `queens:${me}:intro`}
 async function startGame(mode,n){
   if(starting)return;
-  if(n===9&&!challengeOpen(mode)){toast(mode==='daily'?'오늘의 어려움을 깨면 도전이 열려요.':'오늘의 퍼즐 어려움을 한 번 깨면 연습 도전이 열려요.',2600);SFX.wrong();return}
+  if(n===9&&!challengeOpen(mode)){toast('오늘의 퍼즐 세 판을 모두 깨면 도전이 열려요.',2600);SFX.wrong();return}
   // 하루 처음 오늘의 퍼즐을 시작할 때 한 번만 규칙 안내
   if(mode==='daily'&&store.get(introKey(),'')!==today){
     const st=(dayInfo(n)||{}).status;
@@ -1434,10 +1436,10 @@ function myTotal(){
   if(gem)total=Math.max(0,total-CONFIG.CH_BONUS_MS);
   return{count,total,gem};
 }
-// 도전이 열렸는지: 오늘의 도전은 그날 어려움을 깨야, 연습 도전은 어려움을 한 번이라도 깼으면
+// 도전이 열렸는지: 오늘의 도전은 그날 세 판을 모두 깨야, 연습 도전은 세 판을 모두 깬 날이 한 번이라도 있으면
 function challengeOpen(mode){
-  const today8=(dayInfo(8)||{}).status==='clear';
-  return mode==='daily'?today8:today8||Number((prof.stats||{}).c8)>0;
+  const all3=LEVELS.every(l=>(dayInfo(l.n)||{}).status==='clear');
+  return mode==='daily'?all3:all3||Number((prof.stats||{}).triples)>0;
 }
 
 /* ---------- 결과 화면 ---------- */
@@ -1474,20 +1476,28 @@ function showResult(){
   rankSize=n===9?9:0;$('rankDate').textContent=today.slice(5).replace('-','.')+' 오늘의 순위';
   setTimeout(()=>restartAnim($('resTitle'),'stage-in'),300);
   renderRankTabs();loadRanking(today,rankSize);
-  let next=LEVELS.find(l=>l.n>n&&(dayInfo(l.n)||{}).status!=='clear'&&(dayInfo(l.n)||{}).status!=='fail');
-  if(!next&&n!==9&&challengeOpen('daily')&&!(dayInfo(9)||{}).status)next=CHALLENGE;   // 어려움까지 깼으면 도전으로
-  $('resNext').textContent=next?`NEXT ▶ ${next.name}`:'처음으로';
-  $('resNext').onclick=()=>next?startGame('daily',next.n):goHome();
+  const next=n===9?null:nextDaily(n);
+  setResNext(next,'NEXT ▶ ');
   show('result');
 }
 function showRankingOnly(){
   $('resultTop').style.display='none';rankSize=0;
   $('rankDate').textContent=today.slice(5).replace('-','.')+' 오늘의 순위';
   renderRankTabs();loadRanking(today,0);
-  const l=LEVELS.find(l=>{const s=(dayInfo(l.n)||{}).status;return s!=='clear'&&s!=='fail'});
-  $('resNext').textContent=l?`오늘의 퍼즐 ▶ ${l.name}`:'처음으로';
-  $('resNext').onclick=()=>l?startGame('daily',l.n):goHome();
+  setResNext(nextDaily(0),'오늘의 퍼즐 ▶ ');
   show('result');
+}
+// 다음에 할 판: 아직 안 한 판(지금 판보다 큰 것 먼저) → 세 판 다 깼으면 도전
+function nextDaily(n){
+  const todo=l=>{const s=(dayInfo(l.n)||{}).status;return s!=='clear'&&s!=='fail'};
+  const l=LEVELS.find(l=>l.n>n&&todo(l))||LEVELS.find(todo);
+  if(l)return l;
+  return challengeOpen('daily')&&todo(CHALLENGE)?CHALLENGE:null;
+}
+// 다음 판이 없으면 '처음으로' 버튼 하나만
+function setResNext(next,label){
+  const b=$('resNext');b.hidden=!next;$('resHome').style.gridColumn=next?'':'1 / -1';$('resHome').classList.toggle('y',!next);
+  if(next){b.textContent=label+(next.n===9?'◆ 도전':next.name);b.onclick=()=>startGame('daily',next.n)}
 }
 
 /* ---------- 화면 전환: 픽셀 블록이 체크무늬로 덮였다 걷힘 ---------- */
@@ -1518,7 +1528,9 @@ function goHome(){
   $('nickView').textContent=me;
   renderProfile();renderKingBar();refreshKings();
   const wrap=$('dailyCards');wrap.innerHTML='';
+  const chOpen=challengeOpen('daily');
   LEVELS.forEach(l=>{
+    if(l.n===8&&chOpen){wrap.appendChild(challengeCard());return}   // 세 판을 다 깨면 어려움 자리에 도전이 나타남
     const rec=dayInfo(l.n);
     let tag='<span class="tag">NEW</span>',cls='card',sub='';
     if(rec&&rec.status==='clear'){cls+=' done';tag='<span class="tag clear">CLEAR</span>';sub=fmt(rec.ms)}
@@ -1528,28 +1540,35 @@ function goHome(){
     b.innerHTML=`<span class="n">${l.name} <span class="s" style="font-weight:400">${l.n}×${l.n}</span></span><span class="s" style="min-height:14px">${sub}</span>${tag}`;
     b.onclick=()=>{SFX.tap();startGame('daily',l.n)};wrap.appendChild(b);
   });
-  // 도전 카드: 오늘 어려움을 깨면 열림
-  const ch=$('chCard'),cr=dayInfo(9),open=challengeOpen('daily');
-  let ctag='<span class="tag">NEW</span>',ccls='card ch',csub='요령만으로는 막히는 8×8 · 힌트 없음';
-  if(!open){ccls+=' lock';ctag='<span class="tag" style="background:#9C95C9">LOCK</span>';csub='오늘의 어려움을 깨면 열려요'}
-  else if(cr&&cr.status==='clear'){ccls+=' done';ctag='<span class="tag clear">CLEAR</span>';csub=`${fmt(cr.ms)} · 종합 −${CONFIG.CH_BONUS_MS/1000}초`}
-  else if(cr&&cr.status==='fail'){ccls+=' done';ctag='<span class="tag fail">OVER</span>';csub='내일 다시 도전!'}
-  else if(cr){ctag='<span class="tag play">▶ PLAY</span>'}
-  ch.className=ccls;
-  ch.innerHTML=`<span style="display:flex;flex-direction:column;gap:4px"><span class="n"><b class="gem">◆</b> 오늘의 도전 <span class="s" style="font-weight:400">8×8</span></span><span class="s">${csub}</span></span>${ctag.replace('margin-top:auto','')}`;
-  ch.onclick=()=>{SFX.tap();startGame('daily',9)};
   const tt=myTotal();$('totalView').textContent=`${tt.count}/${LEVELS.length}판 · ${fmt(tt.total)}${tt.gem?' ◆':''}`;
   $('soundBtn').textContent=soundOn?'♪ ON':'♪ OFF';$('soundBtn').classList.toggle('on',soundOn);
   renderPracticePick();
   show('home');
 }
+// 도전 카드 (어려움 자리): 어려움 기록은 작게 남김
+function challengeCard(){
+  const cr=dayInfo(9),r8=dayInfo(8)||{};
+  let tag='<span class="tag">NEW</span>',cls='card ch',sub='';
+  if(cr&&cr.status==='clear'){cls+=' done';tag='<span class="tag clear">CLEAR</span>';sub=fmt(cr.ms)}
+  else if(cr&&cr.status==='fail'){cls+=' done';tag='<span class="tag fail">OVER</span>'}
+  else if(cr){tag='<span class="tag play">▶ PLAY</span>'}
+  const k=`queens:${me}:${today}:chShown`;
+  if(!store.get(k,false)){store.set(k,true);cls+=' new';setTimeout(()=>{toast('◆ 오늘의 도전이 열렸어요! 힌트 없는 어려운 8×8이에요.',3000);SFX.clear()},700)}
+  const b=document.createElement('button');b.className=cls;
+  b.innerHTML=`<span class="n"><b class="gem">◆</b> 도전 <span class="s" style="font-weight:400">8×8</span></span><span class="s" style="min-height:14px">${sub||('어려움 '+fmt(r8.ms||0))}</span>${tag}`;
+  b.setAttribute('aria-label','오늘의 도전 8×8');
+  b.onclick=()=>{SFX.tap();startGame('daily',9)};
+  return b;
+}
 // 연습 크기 고르기: 버튼만 다시 그려서 화면 위치가 그대로 유지됨
 function renderPracticePick(){
   const pp=$('practicePick');pp.innerHTML='';
-  if(practiceSize===9&&!challengeOpen('practice'))practiceSize=8;
-  ALL_LEVELS.forEach(l=>{const b=document.createElement('button');const lock=l.n===9&&!challengeOpen('practice');
-    b.className='pick'+(l.n===practiceSize?' on':'')+(lock?' lock':'');b.textContent=(l.n===practiceSize?'▶':'')+(l.n===9?'◆도전':`${l.n}×${l.n}`);
-    b.onclick=()=>{if(lock){toast('오늘의 퍼즐 어려움을 한 번 깨면 연습 도전이 열려요.',2600);SFX.wrong();return}practiceSize=l.n;SFX.tap();renderPracticePick()};pp.appendChild(b)});
+  const chOpen=challengeOpen('practice');   // 세 판을 모두 깬 날이 한 번이라도 있으면 '◆도전' 버튼이 생김
+  if(practiceSize===9&&!chOpen)practiceSize=8;
+  pp.className=chOpen?'grid4':'grid3';
+  (chOpen?ALL_LEVELS:LEVELS).forEach(l=>{const b=document.createElement('button');
+    b.className='pick'+(l.n===practiceSize?' on':'');b.textContent=(l.n===practiceSize?'▶':'')+(l.n===9?'◆도전':`${l.n}×${l.n}`);
+    b.onclick=()=>{practiceSize=l.n;SFX.tap();renderPracticePick()};pp.appendChild(b)});
 }
 
 /* ---------- 왕관 포인트 · 꾸미기 화면 ---------- */
