@@ -126,6 +126,16 @@ svg.pxi{shape-rendering:crispEdges;display:block}
 @keyframes stagein{0%,40%{opacity:1}20%,60%{opacity:0}}
 .sound{height:44px;padding:0 10px;border:3px solid #000;background:var(--panel);box-shadow:3px 3px 0 #000;font-size:12px;font-weight:700}
 .sound.on{background:var(--green)}
+/* 첫 화면 로고·버튼 (휴대폰에서 조금 작게) */
+#home .title{gap:4px;padding:0}
+#home .title h1{font-size:44px;text-shadow:3px 3px 0 #000,-2px -2px 0 var(--red)}
+#home .sound{height:36px;padding:0 8px;font-size:11px;box-shadow:2px 2px 0 #000}
+#home .sq{width:36px;height:36px;font-size:15px;box-shadow:2px 2px 0 #000}
+/* 연습 일시정지 */
+.pausebtn{height:32px;padding:0 10px;border:3px solid #000;background:var(--panel);box-shadow:2px 2px 0 #000;font-size:12px;font-weight:700}
+#pauseLayer{position:fixed;inset:0;z-index:40;background:#1D1A2F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+#pauseLayer[hidden]{display:none!important}
+#pauseLayer h3{margin:0;font-family:'Galmuri14',monospace;font-weight:400;font-size:40px;color:var(--yellow);text-shadow:3px 3px 0 #000}
 .grid3 .card{min-height:76px;padding:10px}
 .grid3 .card .n{font-size:16px}
 /* 휴대폰: 두 칸 묶음은 그냥 한 줄로 */
@@ -237,13 +247,13 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
 <section class="screen" id="home">
 <div class="col-l">
   <div style="position:relative;height:0;z-index:1">
-    <div style="position:absolute;right:0;top:26px;display:flex;gap:10px">
+    <div style="position:absolute;right:0;top:12px;display:flex;gap:8px">
       <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">♪ OFF</button>
       <button class="sq" id="rulesBtn" aria-label="규칙 보기">?</button>
     </div>
   </div>
   <div class="title">
-    <svg class="pxi" width="72" height="56" viewBox="-1 -1 11 9" data-icon="crown"></svg>
+    <svg class="pxi" width="50" height="39" viewBox="-1 -1 11 9" data-icon="crown"></svg>
     <h1>퀸즈</h1>
   </div>
   <div class="kingbar" id="kingBar" hidden></div>
@@ -424,6 +434,14 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
 </div></div>
 
 <div class="toast" id="toast" role="status"></div>
+
+<!-- 연습 일시정지: 판이 보이지 않게 화면 전체를 덮음 -->
+<div id="pauseLayer" hidden>
+  <h3>PAUSE</h3>
+  <span class="dim" id="pauseTime"></span>
+  <button class="btn y" id="pauseResume" style="width:220px">▶ 계속하기</button>
+  <button class="btn" id="pauseHome" style="width:220px">처음으로</button>
+</div>
 
 <!-- 연습 완료 -->
 <div class="modal" id="clearModal"><div class="box" style="align-items:center;text-align:center">
@@ -611,16 +629,16 @@ function achDesc(a){
 const THEMES=[
   {id:'basic', names:['주황','파랑','초록','보라','빨강','하늘','노랑','분홍'], name:'기본',   at:0,   frame:'#FFF4D6',x:'rgba(0,0,0,.6)',
    colors:['#FCA044','#6888FC','#58D854','#B8A0F8','#F87878','#3CBCFC','#F8E058','#F0A0D0']},
-  {id:'candy', names:['분홍','살구','노랑','민트','하늘','보라','핑크','베이지'], name:'캔디',   at:150, frame:'#F0A0D0',x:'rgba(60,20,60,.55)',
-   colors:['#FFB3BA','#FFDFBA','#FFF3A8','#BAF5C9','#BAE1FF','#D7BAFF','#FFC8F0','#E8C8A0']},
-  {id:'night', names:['파랑','보라','청록','자주','초록','갈색','남색','적갈'], name:'밤하늘', at:500, frame:'#6888FC',x:'rgba(255,255,255,.7)',
-   colors:['#3B4CCA','#7B3FA0','#1E7F8C','#C0436B','#2E8B57','#B5651D','#5A5FD0','#8C2F39']},
+  {id:'candy', names:['분홍','살구','노랑','민트','하늘','보라','밀크티','연두'], name:'캔디',   at:150, frame:'#F0A0D0',x:'rgba(60,20,60,.55)',
+   colors:['#FF9EBB','#FFB870','#FFF27A','#8FEFC0','#8FD3FF','#C3A2FF','#B8957A','#A8E05A']},
+  {id:'night', names:['파랑','보라','청록','자주','초록','주황','회색','적갈'], name:'밤하늘', at:500, frame:'#6888FC',x:'rgba(255,255,255,.7)',
+   colors:['#3B6FE0','#8A3FB8','#1E8C8C','#D0457A','#3E9B4F','#C8742A','#6E6E8A','#8C2F39']},
   {id:'neon', names:['분홍','하늘','연두','노랑','주황','보라','민트','빨강'],  name:'오락실', at:1200,frame:'#39FF14',x:'rgba(0,0,0,.7)',
    colors:['#FF2E88','#00E5FF','#39FF14','#FFE600','#FF8A00','#B026FF','#00FFA3','#FF4040']},
-  {id:'gold', names:['노랑','금색','구리','올리브','적토','살구','라벤더','청회'],  name:'황금 성',at:2500,frame:'#FFCC33',x:'rgba(60,30,0,.6)',
-   colors:['#E8C872','#C9A227','#D98E4A','#A8B17C','#C97B63','#E3B5A4','#B39BC8','#8FB3B0']},
-  {id:'royal', names:['보라','자주','장미','남보라','연보라','팥','남색','분홍'], name:'왕좌',   royal:true,frame:'#FFCC33',x:'rgba(255,230,150,.8)',
-   colors:['#5B2A86','#8E3B8E','#B0306A','#3D2C8D','#7A4FB5','#A0466B','#2E1F5E','#C25B9B']}
+  {id:'gold', names:['노랑','구리','올리브','적토','살구','라벤더','청회','밤색'],  name:'황금 성',at:2500,frame:'#FFCC33',x:'rgba(60,30,0,.6)',
+   colors:['#F2D46B','#C8783A','#9AAA5A','#B04A5E','#F0BFA0','#A890D0','#6FA3A6','#6E4A2E']},
+  {id:'royal', names:['보라','자주','장미','남색','연보라','팥','청록','금'], name:'왕좌',   royal:true,frame:'#FFCC33',x:'rgba(255,230,150,.8)',
+   colors:['#6A2FA0','#B23A9A','#E0507A','#2E4A9C','#A88BE0','#8C3A4A','#2F8A8A','#D9A92E']}
 ];
 const CROWNS=[
   {id:'gold',   name:'금관',   at:0,   body:'#FFCC33',jewel:'#E23B3B'},
@@ -637,6 +655,31 @@ const EFFECTS=[
   {id:'coronation',name:'대관식',royal:true}
 ];
 const COLOR_COUNT=8;
+// 두 색이 눈으로 볼 때 얼마나 다른지 (Lab 거리)
+function labOf(h){const v=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(c=>c<=0.04045?c/12.92:((c+0.055)/1.055)**2.4);
+  const x=(v[0]*0.4124+v[1]*0.3576+v[2]*0.1805)/0.95047,y=v[0]*0.2126+v[1]*0.7152+v[2]*0.0722,z=(v[0]*0.0193+v[1]*0.1192+v[2]*0.9505)/1.08883;
+  const f=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116;return[116*f(y)-16,500*(f(x)-f(y)),200*(f(y)-f(z))]}
+function colorGap(a,b){const A=labOf(a),B=labOf(b);return Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2])}
+// 맞닿은 색 영역끼리는 최대한 다른 색이 되도록 색을 다시 고름 (처음 섞인 순서에서 출발해 바꿔 보며 나아지면 채택)
+function spreadColors(reg,n,colors,pal){
+  const adj=[];
+  for(let i=0;i<n*n;i++){const r=i/n|0,c=i%n;
+    if(c+1<n&&reg[i]!==reg[i+1])adj.push([reg[i],reg[i+1]]);
+    if(r+1<n&&reg[i]!==reg[i+n])adj.push([reg[i],reg[i+n]]);}
+  const pairs=[...new Set(adj.map(([a,b])=>a<b?a+','+b:b+','+a))].map(s=>s.split(',').map(Number));
+  const gap=[];for(let i=0;i<pal.length;i++){gap[i]=[];for(let j=0;j<pal.length;j++)gap[i][j]=colorGap(pal[i],pal[j])}
+  const score=m=>{let lo=1e9,sum=0;for(const[a,b]of pairs){const d=gap[m[a]][m[b]];lo=Math.min(lo,d);sum+=Math.min(d,60)}return lo*1000+sum};
+  let m=colors.slice(),best=score(m);
+  for(let round=0;round<20;round++){
+    let better=false;
+    for(let a=0;a<n;a++){
+      for(let b=a+1;b<n;b++){const t=m.slice();[t[a],t[b]]=[t[b],t[a]];const s=score(t);if(s>best){m=t;best=s;better=true}}
+      for(let k=0;k<pal.length;k++){if(m.includes(k))continue;const t=m.slice();t[a]=k;const s=score(t);if(s>best){m=t;best=s;better=true}}
+    }
+    if(!better)break;
+  }
+  return m;
+}
 
 /* ---------- 도트 아이콘 ---------- */
 const IC = {
@@ -1044,6 +1087,7 @@ function buildBoard(){
   b.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;
   b.innerHTML='';cellEls=[];
   const th=equipped('theme');
+  G.colors=spreadColors(G.reg,n,G.colors,th.colors);   // 붙어 있는 영역은 확실히 다른 색으로
   $('boardWrap').style.boxShadow=`0 0 0 3px ${th.frame},6px 6px 0 3px #000`;
   buildPieces();
   // 모든 칸의 테두리는 똑같이 얇게 두고, 색 영역 경계의 굵은 선은 칸 바깥에 겹쳐 그려서 칸 크기가 모두 같게
@@ -1096,10 +1140,13 @@ function render(){
   $('count').textContent=`${correctCrowns().length}/${G.n}`;
   const h=$('hearts');
   if(G.mode==='daily'){
-    h.innerHTML='';
+    h.innerHTML='';h._ph='';
     for(let k=0;k<CONFIG.HEARTS;k++)h.innerHTML+=`<svg class="pxi" width="21" height="18" viewBox="0 0 7 6"><path d="${IC.heart}" fill="${k<G.hearts?'#E23B3B':'#4A4570'}"/></svg>`;
     h.setAttribute('aria-label',`남은 하트 ${G.hearts}개`);
-  }else{h.innerHTML='<span class="dim">∞ 연습</span>'}
+  }else{
+    const ph=G.status==='play'?'<button class="pausebtn" data-pause aria-label="일시정지">❚❚ 멈춤</button>':'<span class="dim">∞ 연습</span>';
+    if(h._ph!==ph){h.innerHTML=ph;h._ph=ph}
+  }
   $('hintBtn').textContent=G.mode==='daily'?`힌트 ×${G.hintsLeft}`:'힌트';
   $('hintBtn').disabled=G.status==='clear'||G.hintsLeft<=0;
   $('undoBtn').disabled=!G.hist.length||G.status==='clear';
@@ -1387,6 +1434,24 @@ $('hintBtn').onclick=()=>{
     SFX.crown();afterChange();spark(best);
   }
 };
+/* ---------- 연습 일시정지 (오늘의 퍼즐에는 없음) ---------- */
+function pauseGame(){
+  if(!G||G.mode!=='practice'||G.status!=='play'||G.pausedAt)return;
+  G.pausedAt=Date.now();clearInterval(timerId);drag=null;
+  $('pauseTime').textContent=`TIME ${fmt(G.pausedAt-G.startedAt)}`;
+  $('pauseLayer').hidden=false;
+}
+function resumeGame(){
+  if(!G||!G.pausedAt)return;
+  G.startedAt+=Date.now()-G.pausedAt;G.pausedAt=0;   // 멈춘 동안은 시간에서 뺌
+  $('pauseLayer').hidden=true;
+  clearInterval(timerId);timerId=setInterval(tick,250);tick();
+}
+$('hearts').addEventListener('click',e=>{if(e.target.closest('[data-pause]')){SFX.tap();pauseGame()}});
+$('pauseResume').onclick=()=>{SFX.tap();resumeGame()};
+$('pauseHome').onclick=()=>{$('pauseLayer').hidden=true;if(G)G.pausedAt=0;goHome()};
+// 다른 앱으로 넘어가거나 화면이 꺼지면 연습은 자동으로 멈춤
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&$('game').classList.contains('on'))pauseGame()});
 $('backBtn').onclick=()=>{clearInterval(timerId);persist();goHome()};
 
 /* ---------- 순위표 ---------- */
@@ -1436,10 +1501,9 @@ function myTotal(){
   if(gem)total=Math.max(0,total-CONFIG.CH_BONUS_MS);
   return{count,total,gem};
 }
-// 도전이 열렸는지: 오늘의 도전은 그날 세 판을 모두 깨야, 연습 도전은 세 판을 모두 깬 날이 한 번이라도 있으면
+// 도전이 열렸는지: 오늘의 도전·연습 도전 모두 그날 세 판을 다 깨야 열림
 function challengeOpen(mode){
-  const all3=LEVELS.every(l=>(dayInfo(l.n)||{}).status==='clear');
-  return mode==='daily'?all3:all3||Number((prof.stats||{}).triples)>0;
+  return LEVELS.every(l=>(dayInfo(l.n)||{}).status==='clear');
 }
 
 /* ---------- 결과 화면 ---------- */
@@ -1523,7 +1587,7 @@ function show(id){
 
 /* ---------- 첫 화면(메뉴) ---------- */
 function goHome(){
-  G=null;clearInterval(timerId);
+  G=null;clearInterval(timerId);$('pauseLayer').hidden=true;
   $('todayView').textContent=today.slice(5).replace('-','.')+' '+['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(Date.parse(today)).getUTCDay()];
   $('nickView').textContent=me;
   renderProfile();renderKingBar();refreshKings();
@@ -1563,7 +1627,7 @@ function challengeCard(){
 // 연습 크기 고르기: 버튼만 다시 그려서 화면 위치가 그대로 유지됨
 function renderPracticePick(){
   const pp=$('practicePick');pp.innerHTML='';
-  const chOpen=challengeOpen('practice');   // 세 판을 모두 깬 날이 한 번이라도 있으면 '◆도전' 버튼이 생김
+  const chOpen=challengeOpen('practice');   // 오늘 세 판을 다 깨면 '◆도전' 버튼이 생김
   if(practiceSize===9&&!chOpen)practiceSize=8;
   pp.className=chOpen?'grid4':'grid3';
   (chOpen?ALL_LEVELS:LEVELS).forEach(l=>{const b=document.createElement('button');
