@@ -132,7 +132,6 @@ svg.pxi{shape-rendering:crispEdges;display:block}
 #home .sound{height:36px;padding:0 8px;font-size:11px;box-shadow:2px 2px 0 #000}
 #home .sq{width:36px;height:36px;font-size:15px;box-shadow:2px 2px 0 #000}
 /* 연습 일시정지 */
-.pausebtn{height:32px;padding:0 10px;border:3px solid #000;background:var(--panel);box-shadow:2px 2px 0 #000;font-size:12px;font-weight:700}
 #pauseLayer{position:fixed;inset:0;z-index:40;background:#1D1A2F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #pauseLayer[hidden]{display:none!important}
 #pauseLayer h3{margin:0;font-family:'Galmuri14',monospace;font-weight:400;font-size:40px;color:var(--yellow);text-shadow:3px 3px 0 #000}
@@ -169,7 +168,7 @@ svg .flame{animation:flame .5s steps(1) infinite}
 @keyframes flame{50%{transform:translateY(-.6px);filter:brightness(1.3)}}
 svg .shine{animation:shine 2.6s steps(13) infinite}
 @keyframes shine{0%{transform:translateX(0)}55%,100%{transform:translateX(19px)}}
-.kingbar{background:#000;border:3px solid var(--yellow);box-shadow:3px 3px 0 #000;padding:8px 12px;font-size:12px;line-height:1.6;color:var(--panel)}
+.kingbar{background:#000;border:3px solid var(--yellow);box-shadow:3px 3px 0 #000;padding:6px 12px;font-size:13px;line-height:1.6;color:var(--panel);text-align:center}
 .kingbar b{color:var(--yellow)}
 .kingbar .kn{color:var(--yellow);font-weight:700}
 .item.royal{border-color:#C98F00}
@@ -292,7 +291,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
       <span class="dim" id="gSub"></span>
       <span style="font-family:'Galmuri14',monospace;font-size:22px;color:var(--yellow);text-shadow:2px 2px 0 #000" id="gTitle"></span>
     </div>
-    <div style="width:44px"></div>
+    <button class="sq" id="pauseBtn" aria-label="일시정지" style="visibility:hidden"><svg width="16" height="18" viewBox="0 0 4 5" shape-rendering="crispEdges"><path d="M0 0h1v5H0zM3 0h1v5H3z" fill="#1D1A2F"/></svg></button>
   </div>
   <div class="hud row">
     <div style="display:flex;align-items:center;gap:8px">
@@ -919,9 +918,7 @@ function renderKingBar(){
   const b=$('kingBar');if(!b)return;
   if(!kings.total){b.hidden=true;return}
   b.hidden=false;
-  b.innerHTML=isKing()
-    ?'<b>♛ 지금 내가 오늘의 왕!</b> 왕 전용 꾸미기를 써 보세요.'
-    :'<b>♛ 오늘의 왕</b> <span class="kn"></span> · 종합 1등을 차지하면 왕 전용 꾸미기가 열려요.';
+  b.innerHTML=isKing()?'<b>♛ 오늘의 왕은 나!</b>':'<b>♛ 오늘의 왕</b> <span class="kn"></span>';
   const kn=b.querySelector('.kn');if(kn)kn.textContent=kings.total;
 }
 let kingsAt=0;
@@ -1018,7 +1015,7 @@ let starting=false;
 function introKey(){return `queens:${me}:intro`}
 async function startGame(mode,n){
   if(starting)return;
-  if(n===9&&!challengeOpen(mode)){toast('오늘의 퍼즐 세 판을 모두 깨면 도전이 열려요.',2600);SFX.wrong();return}
+  if(n===9&&!challengeOpen(mode)){toast(mode==='daily'?'오늘의 퍼즐 세 판을 모두 깨면 도전이 열려요.':'오늘의 퍼즐 세 판을 끝까지 풀면 연습 도전이 열려요.',2600);SFX.wrong();return}
   // 하루 처음 오늘의 퍼즐을 시작할 때 한 번만 규칙 안내
   if(mode==='daily'&&store.get(introKey(),'')!==today){
     const st=(dayInfo(n)||{}).status;
@@ -1140,13 +1137,11 @@ function render(){
   $('count').textContent=`${correctCrowns().length}/${G.n}`;
   const h=$('hearts');
   if(G.mode==='daily'){
-    h.innerHTML='';h._ph='';
+    h.innerHTML='';
     for(let k=0;k<CONFIG.HEARTS;k++)h.innerHTML+=`<svg class="pxi" width="21" height="18" viewBox="0 0 7 6"><path d="${IC.heart}" fill="${k<G.hearts?'#E23B3B':'#4A4570'}"/></svg>`;
     h.setAttribute('aria-label',`남은 하트 ${G.hearts}개`);
-  }else{
-    const ph=G.status==='play'?'<button class="pausebtn" data-pause aria-label="일시정지">❚❚ 멈춤</button>':'<span class="dim">∞ 연습</span>';
-    if(h._ph!==ph){h.innerHTML=ph;h._ph=ph}
-  }
+  }else{h.innerHTML='<span class="dim">∞ 연습</span>'}
+  $('pauseBtn').style.visibility=G.mode==='practice'&&G.status==='play'?'visible':'hidden';   // 멈춤은 연습에만
   $('hintBtn').textContent=G.mode==='daily'?`힌트 ×${G.hintsLeft}`:'힌트';
   $('hintBtn').disabled=G.status==='clear'||G.hintsLeft<=0;
   $('undoBtn').disabled=!G.hist.length||G.status==='clear';
@@ -1447,7 +1442,7 @@ function resumeGame(){
   $('pauseLayer').hidden=true;
   clearInterval(timerId);timerId=setInterval(tick,250);tick();
 }
-$('hearts').addEventListener('click',e=>{if(e.target.closest('[data-pause]')){SFX.tap();pauseGame()}});
+$('pauseBtn').onclick=()=>{SFX.tap();pauseGame()};
 $('pauseResume').onclick=()=>{SFX.tap();resumeGame()};
 $('pauseHome').onclick=()=>{$('pauseLayer').hidden=true;if(G)G.pausedAt=0;goHome()};
 // 다른 앱으로 넘어가거나 화면이 꺼지면 연습은 자동으로 멈춤
@@ -1501,9 +1496,10 @@ function myTotal(){
   if(gem)total=Math.max(0,total-CONFIG.CH_BONUS_MS);
   return{count,total,gem};
 }
-// 도전이 열렸는지: 오늘의 도전·연습 도전 모두 그날 세 판을 다 깨야 열림
+// 도전이 열렸는지: 오늘의 도전은 그날 세 판을 다 깨야, 연습 도전은 세 판을 끝까지 풀면(GAME OVER 뒤 완성도 인정) 열림
 function challengeOpen(mode){
-  return LEVELS.every(l=>(dayInfo(l.n)||{}).status==='clear');
+  const ok=mode==='daily'?['clear']:['clear','fail'];
+  return LEVELS.every(l=>ok.includes((dayInfo(l.n)||{}).status));
 }
 
 /* ---------- 결과 화면 ---------- */
@@ -1627,7 +1623,7 @@ function challengeCard(){
 // 연습 크기 고르기: 버튼만 다시 그려서 화면 위치가 그대로 유지됨
 function renderPracticePick(){
   const pp=$('practicePick');pp.innerHTML='';
-  const chOpen=challengeOpen('practice');   // 오늘 세 판을 다 깨면 '◆도전' 버튼이 생김
+  const chOpen=challengeOpen('practice');   // 오늘 세 판을 끝까지 풀면 '◆도전' 버튼이 생김
   if(practiceSize===9&&!chOpen)practiceSize=8;
   pp.className=chOpen?'grid4':'grid3';
   (chOpen?ALL_LEVELS:LEVELS).forEach(l=>{const b=document.createElement('button');
@@ -1662,7 +1658,9 @@ function renderDeck(){
   $('deckName').textContent=me;$('deckBadge').textContent=p.t.name;$('deckBadge').style.color=p.t.color;
   $('deckPoints').textContent=prof.points+'P';$('deckBar').style.width=p.pct+'%';
   $('deckNext').textContent=p.nx?`다음 칭호 ${p.nx.name}까지 ${p.nx.at-prof.points}P 남았어요.`:'최고 칭호 황제에 올랐어요!';
-  $('deckTitles').innerHTML='칭호: '+TITLES.map(t=>`<span style="color:${prof.points>=t.at?t.color:'#4A4570'}">${t.name} ${t.at}P</span>`).join(' → ');
+  // 칭호 사다리: 이름만 간단히 (지금 칭호는 굵게)
+  const cur=titleOf(prof.points);
+  $('deckTitles').innerHTML=TITLES.map(t=>`<span style="color:${prof.points>=t.at?t.color:'#4A4570'};${t===cur?'font-weight:700':''}">${t.name}</span>`).join(' › ');
   [['theme',THEMES,'themeItems'],['crown',CROWNS,'crownItems'],['effect',EFFECTS,'fxItems']].forEach(([kind,list,id])=>{
     const box=$(id);box.innerHTML='';const cur=equipped(kind).id;
     list.forEach(it=>{
