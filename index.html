@@ -216,8 +216,12 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <svg class="pxi" width="72" height="56" viewBox="-1 -1 11 9" data-icon="crown"></svg>
     <h1>퀸즈</h1>
   </div>
+  <div class="box" style="max-width:none" id="hubBox" hidden>
+    <button class="btn y" id="hubBtn" style="font-size:16px">생각 오락실 계정으로 로그인 ▶</button>
+    <p style="margin:0;font-size:12px;line-height:1.7;color:var(--muted)">계정 하나로 꼬들·셈들·가락 꼬들·퀸즈를 모두 해요. <b>예전 퀸즈 닉네임과 비밀번호 그대로</b> 가입하면 왕관 포인트가 이어져요.</p>
+  </div>
   <div class="box" style="max-width:none" id="loginBox">
-    <h3>LOGIN</h3>
+    <h3 id="loginH">LOGIN</h3>
     <label for="loginName">닉네임</label>
     <input id="loginName" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false">
     <label for="loginPin">비밀번호 (숫자 4자리)</label>
@@ -255,6 +259,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
     <svg class="pxi" width="50" height="39" viewBox="-1 -1 11 9" data-icon="crown"></svg>
     <h1>퀸즈</h1>
   </div>
+  <button class="kingbar" id="hubNag" hidden style="cursor:pointer;font-family:inherit;width:100%">통합 계정으로 바꿔 주세요! 예전 퀸즈 로그인은 <b>10월 31일</b>까지예요. 지금 닉네임과 비밀번호로 가입하면 포인트가 이어져요.</button>
   <div class="kingbar" id="kingBar" hidden></div>
   <div class="player px" style="display:flex;flex-direction:column;gap:8px">
     <div class="row">
@@ -451,6 +456,7 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
   <div class="grid2" style="width:100%"><button class="btn" id="clearHome">처음으로</button><button class="btn y" id="clearNext">다음 문제</button></div>
 </div></div>
 
+<script src="https://dobbi52.github.io/games/arcade-auth.js?v=1"></script>
 <script>
 /* =========================================================
    CONFIG — 구글 시트(Code.gs)를 연결하려면 Apps Script 웹 앱 주소를 넣으세요.
@@ -874,6 +880,14 @@ function dailyPuzzle(n,date,name){
 /* ---------- 서버 연결 ---------- */
 const ONLINE=!!CONFIG.SCRIPT_URL;
 let me=store.get('queens:name',''),pin=store.get('queens:pin','');
+/* 생각 오락실 통합 계정 */
+const AA=window.ArcadeAuth||null;
+const OLD_CLOSED=todayKST()>='2026-11-01';   // 이날부터 예전 퀸즈 로그인 막음
+let HUB=false;
+{const a=AA&&AA.get();if(a){me=a.nick;pin=a.pin;HUB=true}else if(OLD_CLOSED&&AA){me='';pin=''}}
+// 오늘의 퍼즐은 서버가 이 게임에서 쓰는 이름(예전 닉네임)으로 만들어 확인하므로 같은 이름을 씀
+const pkeyKey=()=>`queens:${me}:pkey`;
+const pkey=()=>store.get(pkeyKey(),'')||me;
 let today=todayKST();
 let days={};   // 오늘 기록 {크기:{status,ms,hearts,score,misses,startedAt}}
 let prof={points:0,ach:[],days:0,lastDay:'',stats:{}};   // 왕관 포인트·업적·완료한 날 수
@@ -946,7 +960,8 @@ async function api(action,data,tries=3){
   for(let k=0;k<tries;k++){
     let j=null;
     try{
-      const res=await fetch(CONFIG.SCRIPT_URL,{method:'POST',body:JSON.stringify(Object.assign({action},data))});
+      const body=Object.assign({action},data);if(HUB&&data&&data.name===me)body.hub=1;
+      const res=await fetch(CONFIG.SCRIPT_URL,{method:'POST',body:JSON.stringify(body)});
       j=await res.json();
     }catch(e){last=new Error('연결하지 못했어요. 인터넷을 확인해 주세요.')}
     if(j){
@@ -1026,7 +1041,7 @@ async function startGame(mode,n){
   }
   const sz=boardSize(n);   // n은 단계(6·7·8, 9=도전), sz는 판 크기
   const seed=mode==='daily'?`queens-${today}-${n}`:`practice-${Date.now()}-${Math.floor(Math.random()*1e9)}`;
-  const P=mode==='daily'?dailyPuzzle(n,today,me):generate(sz,seed,n===9);
+  const P=mode==='daily'?dailyPuzzle(n,today,pkey()):generate(sz,seed,n===9);
   const g={mode,lv:n,seed,date:today,...P,n:sz,marks:new Array(sz*sz).fill(0),hist:[],hearts:CONFIG.HEARTS,
      hintsLeft:mode==='daily'?CONFIG.DAILY_HINTS[n]:Infinity,startedAt:Date.now(),status:'play',finishMs:0,failed:false,pending:false};
   if(mode==='daily'){
@@ -1583,6 +1598,7 @@ function show(id){
 
 /* ---------- 첫 화면(메뉴) ---------- */
 function goHome(){
+  {const nag=$('hubNag');if(nag){nag.hidden=!(AA&&!HUB&&me);nag.onclick=()=>AA.open({gameName:'퀸즈',color:'#FFCC33',onPlay:()=>{}})}}
   G=null;clearInterval(timerId);$('pauseLayer').hidden=true;
   $('todayView').textContent=today.slice(5).replace('-','.')+' '+['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(Date.parse(today)).getUTCDay()];
   $('nickView').textContent=me;
@@ -1703,7 +1719,7 @@ async function enter(mode,n,p,msg,btn){
   let created=false;
   if(ONLINE){
     msg.textContent='확인하는 중...';btn.disabled=true;
-    try{const j=await api('join',{name:n,pin:p,mode});today=j.today;days=j.days||{};created=j.created;if(j.prof)prof=j.prof;setKings(j.kings)}
+    try{const j=await api('join',{name:n,pin:p,mode});today=j.today;days=j.days||{};created=j.created;if(j.prof)prof=j.prof;setKings(j.kings);if(j.pkey)store.set(`queens:${n}:pkey`,j.pkey)}
     catch(e){msg.textContent=e.message;btn.disabled=false;return}
     btn.disabled=false;
   }else{   // 서버 없이 쓸 때: 이 기기 안에서만 계정 확인
@@ -1735,11 +1751,18 @@ function doSignup(){
   enter('signup',n,p,msg,$('suBtn'));
 }
 function showAuth(which){
+  if(AA){   // 통합 계정이 있으면: 새 가입은 통합 계정으로만, 예전 로그인은 10월 31일까지
+    $('hubBox').hidden=false;$('toSignup').hidden=true;which='login';
+    $('loginH').textContent='예전 퀸즈 닉네임';
+    $('signupBox').hidden=true;$('loginBox').hidden=OLD_CLOSED;
+    $('loginMsg').textContent='';return;
+  }
   $('loginBox').hidden=which!=='login';$('signupBox').hidden=which!=='signup';
   $('loginMsg').textContent='';$('suMsg').textContent='';
   setTimeout(()=>$(which==='login'?'loginName':'suName').focus(),50);
 }
 function logout(message){
+  if(HUB&&AA){HUB=false;AA.logout()}
   me='';pin='';days={};kings={total:''};prof={points:0,ach:[],days:0,lastDay:'',stats:{}};
   try{localStorage.removeItem('queens:name');localStorage.removeItem('queens:pin')}catch(e){}
   G=null;clearInterval(timerId);
@@ -1774,8 +1797,32 @@ $('clearHome').onclick=()=>{$('clearModal').classList.remove('on');goHome()};
 $('clearNext').onclick=()=>{$('clearModal').classList.remove('on');startGame('practice',G.lv)};
 
 /* ---------- 시작 ---------- */
+/* ---------- 생각 오락실 통합 계정 ---------- */
+async function enterHub(a){
+  if(!a)return;
+  me=a.nick;pin=a.pin;HUB=true;
+  prof=store.get(profKey(),{points:0,ach:[],days:0,lastDay:'',stats:{}});days={};
+  goHome();toast(`${me}님, 어서 와요!`);
+  if(!ONLINE)return;
+  try{
+    const j=await api('join',{name:me,pin,mode:'login'},2);
+    if(j.pkey)store.set(pkeyKey(),j.pkey);
+    today=j.today;days=j.days||{};if(j.prof){prof=j.prof;store.set(profKey(),prof)}setKings(j.kings);kingsAt=Date.now();
+    if(!G)goHomeRefresh();else renderProfile();
+    flush();
+  }catch(e){toast(e.message||'연결하지 못했어요.',3000)}
+}
+if(AA){
+  $('hubBtn').onclick=()=>{SFX.tap();AA.open({gameName:'퀸즈',color:'#FFCC33',onPlay:()=>{}})};
+  AA.onChange(a=>{
+    if(a&&(!HUB||a.nick!==me))enterHub(a);
+    else if(!a&&HUB){HUB=false;logout('')}
+  });
+}
 async function boot(){
   paintIcons();
+  showAuth('login');
+  if(HUB){enterHub(AA.get());AA.refresh();return}
   if(!me||!pin){show('login');return}
   prof=store.get(profKey(),prof);
   goHome();                       // 저장된 계정이면 바로 메뉴로
