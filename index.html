@@ -15,6 +15,8 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--bg)}
+/* 두 번 탭해도 화면이 확대되지 않게 (게임 판은 따로 touch-action:none) */
+*{touch-action:manipulation}
 body{font-family:'Galmuri11',monospace;color:var(--panel);-webkit-font-smoothing:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 button{font-family:inherit;cursor:pointer;color:var(--ink)}
 .app{max-width:440px;margin:0 auto;min-height:100%;padding:20px 16px 24px;display:flex;flex-direction:column}
@@ -1796,6 +1798,17 @@ $('resHome').onclick=goHome;
 $('clearHome').onclick=()=>{$('clearModal').classList.remove('on');goHome()};
 $('clearNext').onclick=()=>{$('clearModal').classList.remove('on');startGame('practice',G.lv)};
 
+/* ---------- 화면 확대 막기 (아이폰은 viewport 설정을 무시해서 따로 막음) ---------- */
+['gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+/* ---------- 컴퓨터 화면: 배치는 그대로, 화면 높이에 맞춰 전체를 키움 ---------- */
+function fitScreen(){
+  const w=innerWidth,h=innerHeight;
+  // 휴대폰·좁은 창은 그대로. 넓은 화면은 게임 화면 높이(약 780px)가 꽉 차게 키움 (최대 1.6배)
+  const s=w<700?1:Math.max(1,Math.min(1.6,h/790,w/520));
+  document.body.style.zoom=s===1?'':String(Math.round(s*100)/100);
+}
+addEventListener('resize',fitScreen);fitScreen();
 /* ---------- 시작 ---------- */
 /* ---------- 생각 오락실 통합 계정 ---------- */
 async function enterHub(a){
