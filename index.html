@@ -105,6 +105,29 @@ svg.pxi{shape-rendering:crispEdges;display:block}
 .box ol,.box ul{margin:0;padding-left:20px;font-size:13px;line-height:1.7;display:flex;flex-direction:column;gap:6px}
 .box b{font-weight:700}
 .box .hr{color:#C0262F}.box .hb{color:#2F4BB3}.box .hg{color:#1F7A4D}
+/* 놀이 방법: 짧은 3쪽 */
+.box.help{gap:14px;word-break:keep-all;overflow-wrap:anywhere}
+.hpage{display:flex;flex-direction:column;gap:12px}
+.hpage[hidden]{display:none}
+.hpage .hl,.hpage .cap{margin:0;font-size:14px;line-height:1.7;text-align:center;text-wrap:balance}
+.hx{display:flex;justify-content:center;background:#1D1A2F;border:3px solid #000;padding:12px}
+.mini{display:grid;grid-template-columns:repeat(5,34px);grid-auto-rows:34px;border:2px solid #000}
+.mini i{display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,.25);position:relative}
+.mini i svg{width:24px;height:20px}
+.mini i.bt{border-top:2px solid #000}.mini i.bb{border-bottom:2px solid #000}.mini i.bl{border-left:2px solid #000}.mini i.br{border-right:2px solid #000}
+.tips{list-style:none;margin:0;padding:0!important;display:flex;flex-direction:column;gap:8px}
+.tips li{display:flex;align-items:center;gap:10px;font-size:13px;line-height:1.55;background:#F3E9C8;border:2px solid #000;padding:8px 10px}
+.tips .tk{flex:none;min-width:36px;height:36px;padding:0 4px;display:grid;place-items:center;border:2px solid #000;background:#fff;font-size:12px;font-weight:700;color:#1D1A2F}
+.tips .tk svg{width:22px;height:20px}
+.tips .tk.crown{background:#FCA044}
+.tips .tk.txt{background:#B8A0F8}.tips .tk.g{background:#58D854}
+.tips .tk.heart{background:#E23B3B;color:#fff;font-size:18px}
+.tips .tk.hint{background:#3CBCFC;font-size:16px}
+.tips .tk.gemtk{background:#2A2245;color:#3CBCFC;font-size:16px}
+.tips .tk.rank{background:#FFCC33;font-size:11px}
+.hdots{display:flex;justify-content:center;gap:8px}
+.hdots i{width:10px;height:10px;background:#C9BF9F;border:2px solid #000}
+.hdots i.on{background:#FFCC33}
 .box input{height:48px;border:3px solid #000;padding:0 10px;font-family:inherit;font-size:16px;width:100%;background:#fff;color:var(--ink);caret-color:var(--ink)}
 
 /* ===== 레트로 애니메이션 ===== */
@@ -386,27 +409,35 @@ svg .shine{animation:shine 2.6s steps(13) infinite}
 <div id="wipe"></div>
 
 <!-- 규칙 -->
-<div class="modal" id="rulesModal"><div class="box">
-  <h3>HOW TO PLAY</h3>
-  <ol>
-    <li><b class="hb">색깔마다</b> 왕관을 <b>1개씩</b> 놓아요.</li>
-    <li>모든 <b class="hb">가로줄, 세로줄</b>에도 왕관이 <b>1개씩만</b> 있어요.</li>
-    <li>왕관끼리는 <b class="hr">대각선까지 서로 붙을 수 없어요.</b></li>
-  </ol>
-  <ul>
-    <li>탭 1번: <b>X 표시</b> (왕관이 없다고 메모)</li>
-    <li>탭 2번: <b>왕관</b> · 탭 3번: <b>지우기</b></li>
-    <li>손가락으로 끌면 <b>여러 칸에 X</b></li>
-    <li>칸을 <b>꾹 누르면</b> 표시가 지워져요</li>
-    <li>쉬움·보통: <b class="hg">자동 X</b>가 켜져요</li>
-    <li>오늘의 퍼즐 힌트: 쉬움·보통 <b class="hg">3번</b>, 어려움 <b class="hg">1번</b> · 연습은 무제한</li>
-    <li><b class="gem">◆</b> 쉬움·보통·어려움을 모두 깨면 <b>오늘의 도전</b>이 열려요 (힌트 없음 · 종합 합산 시간 <b class="hg">−30초</b>)</li>
-    <li>힌트는 누를 때마다 한 단계씩: <b class="hb">볼 곳</b> → <b class="hb">이유와 X칠 칸</b> → <b class="hr">정답 칸</b></li>
-    <li>오늘의 퍼즐: <b class="hr">하트 3개</b>, 다 쓰면 순위 제외(계속 풀기 가능)</li>
-    <li>남은 하트 1개마다 기록 <b class="hg">−10초</b></li>
-    <li>순위: <b class="hb">완료한 판 수</b>가 많은 순, 같으면 <b class="hb">합산 시간</b>이 짧은 순</li>
-  </ul>
-  <button class="btn y" data-close>알겠어요</button>
+<div class="modal" id="rulesModal"><div class="box help">
+  <h3 id="helpTitle">HOW TO PLAY</h3>
+  <!-- 1쪽: 규칙 -->
+  <div class="hpage" data-hp="0">
+    <p class="hl">색깔마다, 가로줄마다, 세로줄마다<br><b class="hb">왕관이 딱 1개</b>씩 들어가요.</p>
+    <div class="hx"><div class="mini" id="helpMini"></div></div>
+    <p class="cap">왕관끼리는 <b class="hr">대각선으로도 붙을 수 없어요.</b><br>왕관 둘레 8칸에는 다른 왕관이 못 와요.</p>
+  </div>
+  <!-- 2쪽: 조작과 요령 -->
+  <div class="hpage" data-hp="1" hidden>
+    <ul class="tips">
+      <li><span class="tk" id="tkX"></span><span>한 번 탭하면 <b>X</b> (왕관이 없는 칸 메모)</span></li>
+      <li><span class="tk crown" id="tkCrown"></span><span>두 번 탭하면 <b>왕관</b>, 세 번 탭하면 지워져요.</span></li>
+      <li><span class="tk txt">끌기</span><span>손가락으로 끌면 <b>여러 칸에 X</b>를 쳐요.</span></li>
+      <li><span class="tk txt">꾹</span><span>칸을 <b>꾹 누르면</b> 표시가 지워져요.</span></li>
+      <li><span class="tk txt g">자동</span><span>쉬움·보통은 왕관 둘레에 <b class="hg">X가 자동</b>으로 쳐져요.</span></li>
+    </ul>
+  </div>
+  <!-- 3쪽: 오늘의 퍼즐과 순위 -->
+  <div class="hpage" data-hp="2" hidden>
+    <ul class="tips">
+      <li><span class="tk heart">♥</span><span>오늘의 퍼즐은 <b class="hr">하트 3개</b>. 틀린 왕관을 놓으면 줄어요. 다 써도 끝까지 풀 수 있어요.</span></li>
+      <li><span class="tk hint">?</span><span>힌트 쉬움·보통 <b class="hg">3번</b>, 어려움 <b class="hg">1번</b>: 볼 곳 → 이유 → 정답 칸 순서로 알려 줘요.</span></li>
+      <li><span class="tk gemtk">◆</span><span>세 판을 모두 깨면 <b>오늘의 도전</b>이 열려요. 힌트 없음, 종합 시간 <b class="hg">−30초</b></span></li>
+      <li><span class="tk rank">1ST</span><span>순위는 <b class="hb">깬 판 수</b> → <b class="hb">합산 시간</b>. 남은 하트 1개마다 <b class="hg">−10초</b></span></li>
+    </ul>
+  </div>
+  <div class="hdots" id="helpDots"><i class="on"></i><i></i><i></i></div>
+  <div class="grid2" id="helpNav"><button class="btn" id="helpPrev">이전</button><button class="btn y" id="helpNext">다음</button></div>
 </div></div>
 
 <!-- 오늘의 퍼즐 안내 (하루 한 번) -->
@@ -1737,7 +1768,7 @@ async function enter(mode,n,p,msg,btn){
   SFX.clear();goHome();
   toast(created?`${me}님, 가입을 축하해요!`:`${me}님, 어서 와요!`);
   flush();
-  if(!store.get('queens:seenRules',false)){setTimeout(()=>{if(me)$('rulesModal').classList.add('on')},700);store.set('queens:seenRules',true)}
+  if(!store.get('queens:seenRules',false)){setTimeout(()=>{if(me)openHelp()},700);store.set('queens:seenRules',true)}
 }
 function doLogin(){
   const n=$('loginName').value.trim(),p=$('loginPin').value.trim(),msg=$('loginMsg');
@@ -1786,7 +1817,7 @@ $('logoutOk').onclick=()=>{$('logoutModal').classList.remove('on');logout('')};
 
 /* ---------- 버튼 연결 ---------- */
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('on'));
-$('rulesBtn').onclick=()=>$('rulesModal').classList.add('on');
+$('rulesBtn').onclick=()=>openHelp();
 soundOn=store.get('queens:sound',false);
 $('soundBtn').onclick=()=>{soundOn=!soundOn;store.set('queens:sound',soundOn);$('soundBtn').textContent=soundOn?'♪ ON':'♪ OFF';$('soundBtn').classList.toggle('on',soundOn);SFX.crown()};
 $('practiceStart').onclick=()=>startGame('practice',practiceSize);
@@ -1798,6 +1829,34 @@ $('resHome').onclick=goHome;
 $('clearHome').onclick=()=>{$('clearModal').classList.remove('on');goHome()};
 $('clearNext').onclick=()=>{$('clearModal').classList.remove('on');startGame('practice',G.lv)};
 
+/* ---------- 놀이 방법: 3쪽을 넘겨 봄 ---------- */
+const HELP_TITLES=['규칙','조작과 요령','오늘의 퍼즐'];
+let helpPage=0,helpDrawn=false;
+function drawHelpMini(){
+  // 5×5 예시 판 (왕관 5개가 규칙대로 놓인 모습)
+  const reg='AABBBACCBBDDCCEDCCEEDDEEE',sol=[1,3,0,2,4],col={A:'#FCA044',B:'#3CBCFC',C:'#58D854',D:'#F0A0D0',E:'#B8A0F8'};
+  let h='';
+  for(let i=0;i<25;i++){const r=i/5|0,c=i%5,g=reg[i];let cls='';
+    if(r===0||reg[i-5]!==g)cls+=' bt';if(r===4||reg[i+5]!==g)cls+=' bb';if(c===0||reg[i-1]!==g)cls+=' bl';if(c===4||reg[i+1]!==g)cls+=' br';
+    h+=`<i class="${cls.trim()}" style="background:${col[g]}">${sol[r]===c?`<svg viewBox="-1 -1 11 9" shape-rendering="crispEdges">${crownSVG('#FFCC33','#E23B3B')}</svg>`:''}</i>`}
+  $('helpMini').innerHTML=h;
+  $('tkX').innerHTML=`<svg viewBox="0 0 5 5" shape-rendering="crispEdges"><path d="${IC.x}" fill="#1D1A2F"/></svg>`;
+  $('tkCrown').innerHTML=`<svg viewBox="-1 -1 11 9" shape-rendering="crispEdges">${crownSVG('#FFCC33','#E23B3B')}</svg>`;
+  helpDrawn=true;
+}
+function renderHelp(){
+  if(!helpDrawn)drawHelpMini();
+  document.querySelectorAll('#rulesModal .hpage').forEach(p=>p.hidden=Number(p.dataset.hp)!==helpPage);
+  $('helpTitle').textContent='HOW TO PLAY · '+HELP_TITLES[helpPage];
+  [...$('helpDots').children].forEach((d,k)=>d.classList.toggle('on',k===helpPage));
+  const last=helpPage===HELP_TITLES.length-1;
+  $('helpPrev').hidden=helpPage===0;
+  $('helpNav').style.gridTemplateColumns=helpPage===0?'1fr':'';
+  $('helpNext').textContent=last?'시작하기':'다음';
+}
+function openHelp(){helpPage=0;renderHelp();$('rulesModal').classList.add('on')}
+$('helpPrev').onclick=()=>{if(helpPage>0){helpPage--;SFX.tap();renderHelp()}};
+$('helpNext').onclick=()=>{if(helpPage<HELP_TITLES.length-1){helpPage++;SFX.tap();renderHelp()}else $('rulesModal').classList.remove('on')};
 /* ---------- 화면 확대 막기 (아이폰은 viewport 설정을 무시해서 따로 막음) ---------- */
 ['gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
